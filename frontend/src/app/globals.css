@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+*,
+*::before,
+*::after {
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box; /* This ensures that padding and borders are included in the total width and height of the elements */
+
+}
+
+html {
+
+  scroll-behavior: smooth;
+
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -66,4 +84,27 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+@layer utilities {
+
+  .debugger{
+
+    @apply border-4 border-red-500
+
+  }
+
+  .flex_center{
+
+    @apply flex justify-center items-center
+
+  }
+
+  .flex_col_center{
+
+    @apply flex flex-col justify-center items-center
+
+  }
+
 }
