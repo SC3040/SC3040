@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/src
+      - /src/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    command: npm run dev
+
+# Start Running:
+# 1) docker-compose up --build
+
+# Stop Running:
+# 1) Ctrl C
+# 2) docker-compose down
