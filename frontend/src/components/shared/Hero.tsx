@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react"
 import Link from "next/link";
+import Image from "next/image";
 
 const Hero = () => {
     return (
@@ -41,7 +42,9 @@ const Hero = () => {
                 }}
                 className="text-center mt-6 text-base md:text-xl text-muted-dark max-w-3xl mx-auto relative z-10"
             >
-                    In a world of digital spending, make every receipt count. Our app turns your camera into a financial crystal ball. Snap a pic, and let our AI crunch the numbers, revealing spending trends, savings opportunities, and budget insights.
+                In a world of digital spending, make every receipt count. Our app turns your camera into a financial
+                crystal ball. Snap a pic, and let our AI crunch the numbers, revealing spending trends, savings
+                opportunities, and budget insights.
             </motion.p>
             <motion.div
                 initial={{
@@ -65,11 +68,25 @@ const Hero = () => {
                         className="flex space-x-2 items-center group"
                     >
                         <span>Get Started</span>
-                        <ArrowRight />
+                        <ArrowRight/>
                     </Button>
                 </Link>
             </motion.div>
-
+            <div
+                className="p-4 border border-neutral-400 rounded-[32px] mt-20 relative">
+                <div
+                    className="absolute inset-x-0 bottom-0 h-40 w-full bg-gradient-to-b from-transparent via-white to-white scale-[1.1] pointer-events-none"/>
+                <div
+                    className="p-2 bg-white border border-neutral-200 rounded-[24px]">
+                    <Image
+                        src="/images/dashboard.png"
+                        alt="header"
+                        width={1920}
+                        height={1080}
+                        className="rounded-[20px]"
+                    />
+                </div>
+            </div>
         </div>
     );
 };
