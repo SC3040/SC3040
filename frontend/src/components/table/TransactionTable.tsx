@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -14,6 +14,7 @@ import {
   useReactTable,
   SortingState,
   getSortedRowModel,
+  VisibilityState,
 } from "@tanstack/react-table"
 
   
@@ -52,6 +53,7 @@ export default function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const table = useReactTable({
     data,
     columns,
@@ -60,12 +62,27 @@ export default function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
   })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setColumnVisibility((prev) => ({
+        ...prev,
+        desc: window.innerWidth >= 768, // Show 'desc' column for screens wider than 768px
+      }))
+    }
+
+    handleResize() // Call once to set initial state
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
 
   return (
@@ -151,7 +168,7 @@ export default function DataTable<TData, TValue>({
             <p className="text-sm font-medium">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value : Number) => {
+              onValueChange={(value) => {
                 table.setPageSize(Number(value))
               }}
             >
