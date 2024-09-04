@@ -1,15 +1,24 @@
 "use client"
 
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { sideBarLinks } from '@/constants';
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Menu } from "lucide-react"
 
-const Sidebar = () => {
+const Sidebar: React.FC = () => {
+    const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
 
-    return (
-        <aside className="h-full w-full flex flex-col justify-between bg-white shadow-md py-8">
+    const handleLinkClick = () => {
+        setIsOpen(false);
+    };
+
+    const SidebarContent = () => (
+        <aside className="h-full w-full flex flex-col justify-between bg-white py-8">
             <div className="flex flex-col space-y-2">
                 {sideBarLinks
                     .filter(link => link.position === "top")
@@ -17,6 +26,7 @@ const Sidebar = () => {
                         <Link
                             key={link.id}
                             href={link.route}
+                            onClick={handleLinkClick}
                             className={`flex items-center space-x-3 px-6 py-3 transition-colors duration-200 ${
                                 pathname === link.route
                                     ? 'bg-blue-100 text-blue-600'
@@ -26,8 +36,8 @@ const Sidebar = () => {
                             <Image
                                 src={link.icon}
                                 alt={link.label}
-                                width={32}
-                                height={32}
+                                width={24}
+                                height={24}
                             />
                             <span>{link.label}</span>
                         </Link>
@@ -42,6 +52,7 @@ const Sidebar = () => {
                         <Link
                             key={link.id}
                             href={link.route}
+                            onClick={handleLinkClick}
                             className={`flex items-center space-x-3 px-6 py-3 transition-colors duration-200 ${
                                 pathname === link.route
                                     ? 'bg-blue-100 text-blue-600'
@@ -51,8 +62,8 @@ const Sidebar = () => {
                             <Image
                                 src={link.icon}
                                 alt={link.label}
-                                width={20}
-                                height={20}
+                                width={24}
+                                height={24}
                             />
                             <span>{link.label}</span>
                         </Link>
@@ -60,6 +71,27 @@ const Sidebar = () => {
                 }
             </div>
         </aside>
+    );
+
+    return (
+        <>
+            {/* Mobile sidebar */}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="fixed top-4 left-4 z-40 lg:hidden">
+                        <Menu className="h-4 w-4" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                    <SidebarContent />
+                </SheetContent>
+            </Sheet>
+
+            {/* Desktop sidebar */}
+            <div className="hidden lg:block w-64 bg-white shadow-md">
+                <SidebarContent />
+            </div>
+        </>
     );
 };
 

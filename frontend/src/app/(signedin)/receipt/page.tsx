@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function ReceptHomePage() {
+export default function ReceiptHomePage() {
     return (
         <div className="flex min-h-screen flex-col items-center justify-start">
             <h1>Receipt Home Page</h1>
