@@ -6,6 +6,8 @@ import { ArrowRight } from "lucide-react"
 import Link from "next/link";
 import Image from "next/image";
 
+import { heroHeading } from "@/constants"
+
 const Hero = () => {
     return (
         <div className="flex flex-col min-h-screen pt-20 md:pt-40 relative overflow-hidden">
@@ -24,7 +26,7 @@ const Hero = () => {
                 }}
                 className="text-2xl md:text-4xl lg:text-7xl font-semibold max-w-6xl mx-auto text-center mt-6 relative z-10"
             >
-                Capture Costs, Cultivate Wealth<br/>Your AI Money Mentor
+                {heroHeading}
             </motion.h1>
             <motion.p
                 initial={{

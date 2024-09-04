@@ -1,3 +1,7 @@
+
+export const heroHeading = "Capture Costs, Cultivate Wealth\n" +
+    "Your AI Money Mentor"
+
 export const protectedRoutes : string[] = [
     "home",
     "dashboard",
