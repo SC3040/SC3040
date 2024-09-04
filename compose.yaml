@@ -1,0 +1,34 @@
+name: SC3040
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/src
+      - /src/node_modules
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://app:8080
+    develop:
+      # included ./frontend prefix as the paths here are with respect to this compose.yaml file
+      watch:
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/next.config.js
+          action: rebuild
+        - path: ./frontend/package-lock.json
+          action: rebuild
+        - path: ./frontend
+          target: /src
+          action: sync
+    command: npm run dev
+
+# Start Running:
+# 1) docker compose up
+
+# Stop Running:
+# 1) Ctrl C
+# 2) docker-compose down
