@@ -64,7 +64,7 @@ const Hero = () => {
                 }}
                 className="flex items-center gap-4 justify-center mt-6 relative z-10"
             >
-                <Link href="/transactions" passHref>
+                <Link href="/signin" passHref>
                     <Button
                         variant="outline"
                         className="flex space-x-2 items-center group"
@@ -86,6 +86,7 @@ const Hero = () => {
                         width={1920}
                         height={1080}
                         className="rounded-[20px]"
+                        priority={true}
                     />
                 </div>
             </div>
