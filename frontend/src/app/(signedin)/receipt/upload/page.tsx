@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload } from 'lucide-react';
 import { useUploadReceipt } from '@/hooks/useUploadReceipt';
+import { useToast } from "@/components/ui/use-toast"
 
 const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -13,6 +14,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 type AllowedFileType = typeof ALLOWED_FILE_TYPES[number];
 
 const ReceiptImagePage: React.FC = () => {
+
+    const { toast } = useToast()
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState<string>('');
     const [preview, setPreview] = useState<string>('');
@@ -56,9 +59,16 @@ const ReceiptImagePage: React.FC = () => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
+
+            toast({
+                title: "Receipt Uploaded Successfuly!",
+              })
         } catch (err) {
-            // Error is already set by the custom hook
-            console.error('Upload failed:', err);
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong!",
+                description: "Try again later...",
+              })
         }
     };
 
