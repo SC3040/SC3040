@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload } from 'lucide-react';
+import { useUploadReceipt } from '@/hooks/useUploadReceipt';
 
 const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -16,6 +17,7 @@ const ReceiptImagePage: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [preview, setPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { uploadReceipt, isUploading, error: uploadError } = useUploadReceipt(); // Use the custom hook
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0];
@@ -41,18 +43,22 @@ const ReceiptImagePage: React.FC = () => {
         }
     };
 
-    const handleUpload = () => {
+    const handleUpload = async () => {
         if (!file) {
             setError('Please select a file to upload.');
             return;
         }
-        // Here you would typically send the file to your server
-        console.log('Uploading file:', file);
-        // Reset the form after upload
-        setFile(null);
-        setPreview('');
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+        try {
+            await uploadReceipt(file);
+            // Reset the form after successful upload
+            setFile(null);
+            setPreview('');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        } catch (err) {
+            // Error is already set by the custom hook
+            console.error('Upload failed:', err);
         }
     };
 
@@ -80,9 +86,9 @@ const ReceiptImagePage: React.FC = () => {
                 </label>
             </div>
 
-            {error && (
+            {(error || uploadError) && (
                 <Alert variant="destructive" className="mb-4">
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{error || uploadError}</AlertDescription>
                 </Alert>
             )}
 
@@ -92,8 +98,8 @@ const ReceiptImagePage: React.FC = () => {
                 </div>
             )}
 
-            <Button onClick={handleUpload} disabled={!file} className="w-full">
-                Upload Receipt
+            <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full">
+                {isUploading ? 'Uploading...' : 'Upload Receipt'}
             </Button>
         </div>
     );

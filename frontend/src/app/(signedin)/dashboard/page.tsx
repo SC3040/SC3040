@@ -5,7 +5,7 @@
 import DataTable from "@/components/table/TransactionTable"
 import { columns } from "@/components/table/transactionCols"
 
-import { useFetchTransactions } from "@/app/hooks/useFetchTransactions";
+import { useFetchTransactions } from "@/hooks/useFetchTransactions";
 
 export default function TransactionHomePage() {
 

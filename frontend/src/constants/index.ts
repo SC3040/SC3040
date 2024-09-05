@@ -26,6 +26,13 @@ export const sideBarLinks = [
         icon: "/icons/dashboard.svg",
     },
     {
+        id: "navLink2",
+        position: "top",
+        label: "Upload Receipt",
+        route: "/receipt/upload",
+        icon: "/icons/upload.svg",
+    },
+    {
         id:"navLink3",
         position: "bot",
         label: "Settings",

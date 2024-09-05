@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { Transaction } from "@/app/hooks/useFetchTransactions";
+import { Transaction } from "@/hooks/useFetchTransactions";
 
 
   export const columns: ColumnDef<Transaction>[] = [
