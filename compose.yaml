@@ -11,9 +11,9 @@ services:
       - ./frontend:/src
       - /src/node_modules
     environment:
-      - NEXT_PUBLIC_BACKEND_URL=http://app:8080
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+      - NEXT_PUBLIC_RECEIPT_MODEL_URL=http://localhost:8080
     develop:
-      # included ./frontend prefix as the paths here are with respect to this compose.yaml file
       watch:
         - path: ./frontend/package.json
           action: rebuild
@@ -25,6 +25,24 @@ services:
           target: /src
           action: sync
     command: npm run dev
+
+  microservices:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./microservices:/app
+      - ${HOME}/Downloads:/app/downloads
+    environment:
+      - FLASK_ENV=development
+    develop:
+      watch:
+        - path: ./microservices
+          target: /app
+          action: sync
+
 
 # Start Running:
 # 1) docker compose up
