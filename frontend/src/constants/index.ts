@@ -1,3 +1,8 @@
+export const PUBLIC_PATHS : string[] = [
+    '/',
+    '/signin',
+    '/signup',
+]
 
 export const heroHeading = "Capture Costs, Cultivate Wealth\n" +
     "Your AI Money Mentor"
