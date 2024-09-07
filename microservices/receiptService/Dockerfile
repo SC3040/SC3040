@@ -11,6 +11,6 @@ COPY . .
 
 RUN mkdir -p /app/downloads
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["python", "receiptservice.py"]

@@ -14,7 +14,7 @@ def allowed_file(filename):
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    
+    print("Inside /upload")
     if 'file' not in request.files:
         return jsonify({'error': 'No file received'}), 400
     
@@ -34,4 +34,4 @@ def upload_file():
 
 if __name__ == '__main__':
 
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8081)

@@ -64,6 +64,7 @@ const ReceiptImagePage: React.FC = () => {
                 title: "Receipt Uploaded Successfuly!",
               })
         } catch (err) {
+            console.log("Error in uploading receipt:")
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong!",

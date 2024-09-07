@@ -13,7 +13,7 @@ export function useUploadReceipt() {
 
     try {
         //TODO: authentication bearer tokens
-      const response = await fetch(`${process.env.NEXT_PUBLIC_RECEIPT_MODEL_URL}/upload`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_RECEIPT_SERVICE_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
