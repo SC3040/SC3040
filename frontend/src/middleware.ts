@@ -9,6 +9,11 @@ export function middleware(request: NextRequest) {
     const accessToken : string | undefined = "test"
 
     const path : string = request.nextUrl.pathname
+
+    // api requests
+    if (path.startsWith('/api/')) {
+      return NextResponse.next()
+  }
     
     // redirect unauthenticated users to sign in page if they try to access protected pages
     if (!accessToken && !isPublicPath(path)) {
@@ -17,7 +22,7 @@ export function middleware(request: NextRequest) {
     }
 
     // redirect authenticated users entering public path to home page
-    if (accessToken && !isPublicPath) {
+    if (accessToken && isPublicPath(path)) {
         return NextResponse.redirect(new URL('/home', request.url))
     }
 

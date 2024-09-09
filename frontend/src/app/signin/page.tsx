@@ -6,22 +6,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAuth } from '@/hooks/AuthProvider'
 
 export default function SignInPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
-    const handleSignIn = (e: React.FormEvent) => {
-        e.preventDefault()
-        // TODO: sign in
-        alert(`Signing in with: ${email} ${password}`)
-    }
+    const { user, signIn, signUp } = useAuth();
 
-    const handleSignUp = (e: React.FormEvent) => {
-        e.preventDefault()
-        // TODO: sign up
-        alert(`Signing up with: ${email} ${password}`)
-    }
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <Card className="w-[350px]">
@@ -36,7 +29,10 @@ export default function SignInPage() {
                             <TabsTrigger value="signup">Sign Up</TabsTrigger>
                         </TabsList>
                         <TabsContent value="signin">
-                            <form onSubmit={handleSignIn}>
+                            <form onSubmit={(e)=>{
+                                e.preventDefault()
+                                signIn(email, password)
+                            }}>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
@@ -65,7 +61,10 @@ export default function SignInPage() {
                             </form>
                         </TabsContent>
                         <TabsContent value="signup">
-                            <form onSubmit={handleSignUp}>
+                            <form onSubmit={(e)=>{
+                                e.preventDefault()
+                                signUp(email, password)
+                            }}>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="signup-email">Email</Label>
