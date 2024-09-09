@@ -62,5 +62,5 @@ class Receipt:
                 raise ReceiptError(attr, f"Field '{attr}' cannot be empty")
 
     def __repr__(self):
-        return (f"Receipt(shop_name={self.shop_name}, date={self.date}, total_cost={self.total_cost}, "
+        return (f"Receipt(merchant_name={self.merchant_name}, date={self.date}, total_cost={self.total_cost}, "
                 f"category={self.category}, itemized_list={self.itemized_list})")

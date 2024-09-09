@@ -24,7 +24,7 @@ from Receipt import Receipt, ReceiptError
 receipt_schema = genai.protos.Schema(
     type=genai.protos.Type.OBJECT,
     properties={
-        'shop_name': genai.protos.Schema(type=genai.protos.Type.STRING),
+        'merchant_name': genai.protos.Schema(type=genai.protos.Type.STRING),
         'date': genai.protos.Schema(type=genai.protos.Type.STRING),
         'total_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
         'category': genai.protos.Schema(
@@ -43,7 +43,7 @@ receipt_schema = genai.protos.Schema(
             )
         )
     },
-    required=['shop_name', 'date', 'total_cost', 'category', 'itemized_list']
+    required=['merchant_name', 'date', 'total_cost', 'category', 'itemized_list']
 )
 
 
