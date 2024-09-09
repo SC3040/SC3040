@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
+from gemini import ReceiptParser
+# Create ins
+receipt_parser = ReceiptParser(os.environ['GOOGLE_API_KEY'])
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -27,6 +30,10 @@ def upload_file():
 
         filename = secure_filename(file.filename)
         file.save(filename)
+
+        # Parse the receipt
+        response = receipt_parser.parse(file)
+        print(response)
 
         return jsonify({'message': 'File uploaded successfully'}), 200
     

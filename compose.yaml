@@ -39,6 +39,8 @@ services:
       - ./microservices/receiptService:/app
     environment:
       - FLASK_ENV=development
+    env_file:
+      - .env
     develop:
       watch:
         - path: ./microservices/receiptService

@@ -5,7 +5,11 @@ WORKDIR /app
 RUN pip install flask==2.0.1
 RUN pip install flask-cors==3.0.10
 RUN pip install Werkzeug==2.0.1
+RUN pip install google-api-python-client==2.143.0
+RUN pip install google-generativeai==0.7.2
+RUN pip install Pillow==10.4.0
 
+ENV PYTHONUNBUFFERED=1
 
 COPY . .
 
