@@ -4,9 +4,9 @@ import { PUBLIC_PATHS } from "@/constants"
  
 export function middleware(request: NextRequest) {
 
-    // const accessToken : string | undefined = request.cookies.get('accessToken')?.value
+    const accessToken : string | undefined = request.cookies.get('accessToken')?.value
 
-    const accessToken : string | undefined = "test"
+    // const accessToken : string | undefined = "test"
 
     const path : string = request.nextUrl.pathname
 
@@ -16,15 +16,17 @@ export function middleware(request: NextRequest) {
   }
     
     // redirect unauthenticated users to sign in page if they try to access protected pages
-    if (!accessToken && !isPublicPath(path)) {
-        const prevPath : string = encodeURIComponent(path)
-        return NextResponse.redirect(new URL(`/signin?from=${prevPath}`, request.url))
-    }
+    // TODO: UNCOMMENT when backend up
+    // if (!accessToken && !isPublicPath(path)) {
+    //     const prevPath : string = encodeURIComponent(path)
+    //     return NextResponse.redirect(new URL(`/signin?from=${prevPath}`, request.url))
+    // }
 
     // redirect authenticated users entering public path to home page
-    if (accessToken && isPublicPath(path)) {
-        return NextResponse.redirect(new URL('/home', request.url))
-    }
+    // TODO: UNCOMMENT when backend up
+    // if (accessToken && isPublicPath(path)) {
+    //     return NextResponse.redirect(new URL('/home', request.url))
+    // }
 
     return NextResponse.next()
 

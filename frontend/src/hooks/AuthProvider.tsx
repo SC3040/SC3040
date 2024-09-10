@@ -50,8 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    setUser({email: "a@gmail.com", id: "iadnv"});
 
+    setLoading(true)
+
+    setUser({email: email, id: "iadnv"});
+    setLoading(false)
 
     // setLoading(true);
     // try {

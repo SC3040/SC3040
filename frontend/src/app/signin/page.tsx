@@ -1,18 +1,70 @@
 "use client"
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from '@/hooks/AuthProvider'
 
 export default function SignInPage() {
+    const router = useRouter();
+
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
-    const { user, signIn, signUp } = useAuth();
+    const { toast } = useToast()
+
+    const { signIn, signUp, loading } = useAuth();
+
+    const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        try {
+            await signIn(email, password)
+            toast({
+                title: "Sign in success!",
+            })
+            router.push('/home')
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                toast({
+                    title: "Sign in failed!",
+                    description: error.message,
+                })
+            } else {
+                toast({
+                    title: "Sign in failed!",
+                    description: "An unexpected error occurred",
+                })
+            }
+        }
+    }
+
+    const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        try {
+            await signUp(email, password)
+            toast({
+                title: "Sign up success!",
+            })
+            router.push('/home')
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                toast({
+                    title: "Sign up failed!",
+                    description: error.message,
+                })
+            } else {
+                toast({
+                    title: "Sign up failed!",
+                    description: "An unexpected error occurred",
+                })
+            }
+        }
+    }
 
 
     return (
@@ -25,14 +77,11 @@ export default function SignInPage() {
                 <CardContent>
                     <Tabs defaultValue="signin" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="signin">Sign In</TabsTrigger>
-                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            <TabsTrigger value="signin" disabled={loading}>Sign In</TabsTrigger>
+                            <TabsTrigger value="signup" disabled={loading}>Sign Up</TabsTrigger>
                         </TabsList>
                         <TabsContent value="signin">
-                            <form onSubmit={(e)=>{
-                                e.preventDefault()
-                                signIn(email, password)
-                            }}>
+                            <form onSubmit={handleSignIn}>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
@@ -55,16 +104,13 @@ export default function SignInPage() {
                                         />
                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full mt-6">
-                                    Sign In
+                                <Button type="submit" className="w-full mt-6" disabled={loading}>
+                                    {loading ? "Signing In..." : "Sign In"}
                                 </Button>
                             </form>
                         </TabsContent>
                         <TabsContent value="signup">
-                            <form onSubmit={(e)=>{
-                                e.preventDefault()
-                                signUp(email, password)
-                            }}>
+                            <form onSubmit={handleSignUp}>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="signup-email">Email</Label>
@@ -88,8 +134,8 @@ export default function SignInPage() {
                                         />
                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full mt-6">
-                                    Sign Up
+                                <Button type="submit" className="w-full mt-6" disabled={loading}>
+                                    {loading ? "Signing Up..." : "Sign Up"}
                                 </Button>
                             </form>
                         </TabsContent>
