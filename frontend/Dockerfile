@@ -1,6 +1,6 @@
 FROM node:20 AS base
 
-WORKDIR /src
+WORKDIR /src/frontend
 
 # copy package.json from local directory to container working directory
 # Install dependencies
