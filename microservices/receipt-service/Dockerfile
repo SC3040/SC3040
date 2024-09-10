@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-WORKDIR /app
+WORKDIR /src/receipt-service
 
 RUN pip install flask==2.0.1
 RUN pip install flask-cors==3.0.10
@@ -15,7 +15,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY . .
 
-RUN mkdir -p /app/downloads
+RUN mkdir -p /src/receipt-service/downloads
 
 EXPOSE 8081
 

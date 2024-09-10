@@ -1,4 +1,4 @@
-name: SC3040
+name: expensenote
 
 services:
   frontend:
@@ -8,8 +8,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/src
-      - /src/node_modules
+      - ./frontend:/src/frontend
+      - /src/frontend/node_modules
     environment:
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
       - NEXT_PUBLIC_RECEIPT_SERVICE_URL=http://localhost:8081
@@ -22,31 +22,69 @@ services:
         - path: ./frontend/package-lock.json
           action: rebuild
         - path: ./frontend
-          target: /src
+          target: /src/frontend
           action: sync
     command: npm run dev
+    networks:
+      - app-network
 
-# TODO:
-#  backend:
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_INITDB_DATABASE=expense_note
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./microservices/core-service/data-seed:/data
+    networks:
+      - app-network
+
+  core-service:
+    build:
+      context: ./microservices/core-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./microservices/core-service:/src/core-service # Sync the source code to /src/core-service
+      - /src/core-service/node_modules # Prevent node_modules from being overwritten
+    environment:
+      - PORT=8080
+      - APP_NAME=core-service
+      - ENVIRONMENT=development
+      - MONGODB_URI=mongodb://root:secret@mongodb:27017/expense_note?authSource=admin
+    networks:
+      - app-network
 
   receipt-service:
     build:
-      context: ./microservices/receiptService
+      context: ./microservices/receipt-service
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
+    depends_on:
+      - core-service
     volumes:
-      - ./microservices/receiptService:/app
+      - ./microservices/receipt-service:/src/receipt-service
     environment:
       - FLASK_ENV=development
     env_file:
       - .env
     develop:
       watch:
-        - path: ./microservices/receiptService
+        - path: ./microservices/receipt-service
           target: /app
           action: sync
+    networks:
+        - app-network
 
+networks:
+  app-network:
+    driver: bridge
 
 # Start Running:
 # 1) docker compose up
