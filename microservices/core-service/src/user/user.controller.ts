@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Logger,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -16,7 +17,6 @@ import {
   UpdateUserDto,
   LoginRequestDto,
   UserResponseDto,
-  LoginResponseDto,
 } from './dto';
 import { ValidationPipe } from '../shared/pipes/validation.pipe';
 import { User } from './user.decorator';
@@ -28,6 +28,7 @@ import {
   ApiConsumes,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 
 @ApiTags('users')
 @Controller('users')
@@ -42,7 +43,7 @@ export class UserController {
   @ApiResponse({
     status: 201,
     description: 'User successfully registered and logged in.',
-    type: LoginResponseDto,
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -53,9 +54,22 @@ export class UserController {
   async createUser(
     @Body() createUserDto: CreateUserDto,
     @UploadedFile() image: Express.Multer.File, // multipart/form-data file is handled separately from other fields in the body, thus not automatically mapped to the DTO
-  ): Promise<LoginResponseDto> {
+    @Res({ passthrough: true }) res: Response, // Inject Response to modify cookies
+  ): Promise<UserResponseDto> {
     createUserDto.image = image || null;
-    return this.userService.create(createUserDto);
+
+    // Get the user and token from the service
+    const { user, token } = await this.userService.create(createUserDto);
+
+    // Set the JWT token as an HttpOnly cookie
+    res.cookie('jwt', token, {
+      httpOnly: true, // Secure from JavaScript access
+      // secure: true,
+      sameSite: 'strict', // Helps mitigate CSRF
+      maxAge: 60 * 60 * 1000, // Cookie expiration (1 hour)
+    });
+
+    return user; // Return user details only (no token)
   }
 
   @UsePipes(new ValidationPipe())
@@ -97,7 +111,7 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: 'User successfully logged in.',
-    type: LoginResponseDto,
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -106,7 +120,18 @@ export class UserController {
   @HttpCode(200)
   async login(
     @Body() loginUserDto: LoginRequestDto,
-  ): Promise<LoginResponseDto> {
-    return this.userService.login(loginUserDto);
+    @Res({ passthrough: true }) res: Response, // Inject Response to modify cookies
+  ): Promise<UserResponseDto> {
+    const { user, token } = await this.userService.login(loginUserDto);
+
+    // Set the JWT token as an HttpOnly cookie
+    res.cookie('jwt', token, {
+      httpOnly: true, // Secure from JavaScript access
+      // secure: true,
+      sameSite: 'strict', // Helps mitigate CSRF
+      maxAge: 60 * 60 * 1000, // Cookie expiration (1 hour)
+    });
+
+    return user;
   }
 }

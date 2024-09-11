@@ -6,7 +6,6 @@ import {
   CreateUserDto,
   UpdateUserDto,
   LoginRequestDto,
-  LoginResponseDto,
   UserResponseDto,
 } from './dto';
 import { plainToInstance } from 'class-transformer';
@@ -37,7 +36,9 @@ export class UserService {
   ) {}
 
   // Create a new user and automatically log them in
-  async create(createUserDto: CreateUserDto): Promise<LoginResponseDto> {
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<{ user: UserResponseDto; token: string }> {
     const { username, email, image } = createUserDto;
 
     // Check if username already exists
@@ -119,7 +120,9 @@ export class UserService {
   }
 
   // Authenticate user during login
-  async login(loginRequestDto: LoginRequestDto): Promise<LoginResponseDto> {
+  async login(
+    loginRequestDto: LoginRequestDto,
+  ): Promise<{ user: UserResponseDto; token: string }> {
     const { username, password } = loginRequestDto;
     const user = await this.userRepository.findOne({ where: { username } });
 
@@ -129,8 +132,8 @@ export class UserService {
 
     const token = this.generateJWT(user);
     return {
-      user: this.buildUserResponse(user),
-      token,
+      user: this.buildUserResponse(user), // Return only the user response DTO
+      token, // Return the token for setting the cookie
     };
   }
 

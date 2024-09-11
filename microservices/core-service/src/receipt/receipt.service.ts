@@ -39,6 +39,7 @@ export class ReceiptService {
 
     // Send the image directly to Flask for processing (no need for Binary conversion)
     const flaskResponse = await this.processReceiptWithFlask(image);
+    this.logger.log('Flask Response:', JSON.stringify(flaskResponse));
 
     // Map Flask response fields to internal naming convention
     return plainToInstance(ReceiptResponseDto, {
@@ -46,12 +47,14 @@ export class ReceiptService {
       date: flaskResponse.date,
       totalCost: flaskResponse.total_cost,
       category: flaskResponse.category,
-      itemizedList: flaskResponse.itemized_list.map((item) => ({
-        itemName: item.item_name,
-        itemQuantity: item.item_quantity,
-        itemCost: item.item_cost,
-      })),
-      image: image.buffer.toString('base64'), // Send the image back in base64 format
+      itemizedList: flaskResponse.itemized_list
+        ? flaskResponse.itemized_list.map((item) => ({
+            itemName: item.item_name,
+            itemQuantity: item.item_quantity,
+            itemCost: item.item_cost,
+          }))
+        : [], // Fallback to empty array if itemized_list is missing
+      image: image.buffer.toString('base64'),
     });
   }
 
