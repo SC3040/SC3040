@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    // Load environment variables from compose.yaml
     ConfigModule.forRoot({
+      // Load environment variables from compose.yaml
       isGlobal: true, // Makes ConfigModule available globally
     }),
 
@@ -19,10 +22,14 @@ import { AppService } from './app.service';
         url: configService.get<string>('MONGODB_URI'), // Use the MONGODB_URI environment variable
         useUnifiedTopology: true,
         synchronize: true, // For development only. To set this to false in production.
-        entities: [__dirname + '/**/*.entity.ts'], // Path to entities
+        entities: [__dirname + '/**/*.entity.{js,ts}'], // Path to entities
       }),
       inject: [ConfigService],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'), // Serve static content from 'public' directory
+    }),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

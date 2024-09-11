@@ -57,6 +57,7 @@ services:
       - APP_NAME=core-service
       - ENVIRONMENT=development
       - MONGODB_URI=mongodb://root:secret@mongodb:27017/expense_note?authSource=admin
+      - JWT_SECRET=61d4c914418d42a14701d76e9c76acdf1fa86d4eaa24a2df7bb9ccb2460a0934fb0a560b6410911b5d9f89ceb7037ade7f24a991c472e85ae7f0105e899b9595
     networks:
       - app-network
 
