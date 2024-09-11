@@ -20,6 +20,11 @@ export class AuthMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, _: Response, next: NextFunction) {
+    // Skip middleware for Swagger documentation
+    if (req.originalUrl === '/docs') {
+      return next();
+    }
+
     const authHeaders = req.headers.authorization;
 
     if (authHeaders && (authHeaders as string).split(' ')[1]) {
