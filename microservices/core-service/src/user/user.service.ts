@@ -94,10 +94,6 @@ export class UserService {
     if (updateUserDto.image && updateUserDto.image.buffer) {
       // Convert the uploaded file to MongoDB Binary, extract from image buffer
       binaryImage = new Binary(Buffer.from(updateUserDto.image.buffer));
-    } else if (!user.image) {
-      // Load default image if no image exists
-      const defaultImage = fs.readFileSync(this.defaultImagePath);
-      binaryImage = new Binary(defaultImage);
     } else {
       // Keep the existing image if no new image is provided
       binaryImage = user.image;
