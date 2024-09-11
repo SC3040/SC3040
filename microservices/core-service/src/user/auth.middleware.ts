@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestMiddleware,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
@@ -19,45 +13,46 @@ export class AuthMiddleware implements NestMiddleware {
     private readonly configService: ConfigService,
   ) {}
 
-  async use(req: Request, _: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     // Skip middleware for Swagger documentation
     if (req.originalUrl === '/docs') {
       return next();
     }
 
-    const authHeaders = req.headers.authorization;
+    // Extract JWT token from HttpOnly cookie
+    const token = req.cookies?.jwt;
 
-    if (authHeaders && (authHeaders as string).split(' ')[1]) {
-      const token = (authHeaders as string).split(' ')[1];
+    if (!token) {
+      this.logger.warn('JWT cookie missing');
+      // Respond with 401 Unauthorized instead of throwing an exception
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        message: 'Not authorized. JWT cookie missing or invalid.',
+      });
+    }
 
-      try {
-        const decoded: any = jwt.verify(
-          token,
-          this.configService.get('JWT_SECRET'),
-        );
-        this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
+    try {
+      const decoded: any = jwt.verify(
+        token,
+        this.configService.get('JWT_SECRET'),
+      );
+      this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
 
-        const user = await this.userService.findEntityById(decoded.id);
-        this.logger.log('User found for decoded token ID');
-
-        if (!user) {
-          this.logger.warn('User not found for decoded token ID');
-          throw new HttpException('User not found.', HttpStatus.UNAUTHORIZED);
-        }
-
-        req.user = user;
-        this.logger.log('User attached to request object');
-        next();
-      } catch (error) {
-        this.logger.error(
-          'Error verifying token or fetching user',
-          error.stack,
-        ); // Log the error with stack trace
-        throw new HttpException('Not authorized.', HttpStatus.UNAUTHORIZED);
+      const user = await this.userService.findEntityById(decoded.id);
+      if (!user) {
+        // Respond with 401 Unauthorized if the user is not found
+        return res.status(HttpStatus.UNAUTHORIZED).json({
+          message: 'User not found.',
+        });
       }
-    } else {
-      this.logger.warn('Authorization header missing or malformed');
-      throw new HttpException('Not authorized.', HttpStatus.UNAUTHORIZED);
+
+      req.user = user;
+      next();
+    } catch (error) {
+      this.logger.error('Error verifying token or fetching user', error.stack);
+      // Respond with 401 Unauthorized if token verification or user fetching fails
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        message: 'Not authorized. Error verifying token or fetching user.',
+      });
     }
   }
 }
