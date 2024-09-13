@@ -4,7 +4,9 @@ import { PUBLIC_PATHS } from "@/constants"
  
 export function middleware(request: NextRequest) {
   console.log("Inside middleware")
-  const accessToken : string | undefined = request.cookies.get('jwt')?.value
+  // const accessToken : string | undefined = request.cookies.get('jwt')?.value
+
+    const accessToken = "TOREMOVE"
 
   console.log(accessToken)
 
