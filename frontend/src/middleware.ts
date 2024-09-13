@@ -3,33 +3,31 @@ import { NextRequest } from 'next/server'
 import { PUBLIC_PATHS } from "@/constants"
  
 export function middleware(request: NextRequest) {
+  console.log("Inside middleware")
+  const accessToken : string | undefined = request.cookies.get('jwt')?.value
 
-    const accessToken : string | undefined = request.cookies.get('accessToken')?.value
+  console.log(accessToken)
 
-    // const accessToken : string | undefined = "test"
+  const path : string = request.nextUrl.pathname
 
-    const path : string = request.nextUrl.pathname
-
-    // api requests
-    if (path.startsWith('/api/')) {
-      return NextResponse.next()
-  }
-    
-    // redirect unauthenticated users to sign in page if they try to access protected pages
-    // TODO: UNCOMMENT when backend up
-    // if (!accessToken && !isPublicPath(path)) {
-    //     const prevPath : string = encodeURIComponent(path)
-    //     return NextResponse.redirect(new URL(`/signin?from=${prevPath}`, request.url))
-    // }
-
-    // redirect authenticated users entering public path to home page
-    // TODO: UNCOMMENT when backend up
-    // if (accessToken && isPublicPath(path)) {
-    //     return NextResponse.redirect(new URL('/home', request.url))
-    // }
-
+  // api requests
+  if (path.startsWith('/api/')) {
     return NextResponse.next()
+  }
+  
+  // redirect unauthenticated users to sign in page if they try to access protected pages
+  if (!accessToken && !isPublicPath(path)) {
+      const prevPath : string = encodeURIComponent(path)
+      return NextResponse.redirect(new URL(`/signin?from=${prevPath}`, request.url))
+  }
 
+  // redirect authenticated users entering public path to home page
+  // Exclude '/home' from this check
+  if (accessToken && isPublicPath(path) && path !== '/home') {
+      return NextResponse.redirect(new URL('/home', request.url))
+  }
+
+  return NextResponse.next()
 }
  
 export const config = {

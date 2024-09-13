@@ -8,11 +8,24 @@ type User = {
   // Add other user properties as needed
 };
 
+type SignInUser = {
+  username: string;
+  password: string;
+}
+
+type SignUpUser = {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+}
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (data : SignInUser) => Promise<void>;
+  signUp: (data : SignUpUser) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -28,78 +41,58 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Check if the user is already logged in
-    checkUserSession();
-  }, []);
 
-  const checkUserSession = async () => {
+  const signIn = async (data: SignInUser) => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/auth/session');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
       if (response.ok) {
-        const session = await response.json();
-        setUser(session.user);
+        const userData = await response.json();
+        setUser(userData);
+        
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Sign in failed');
       }
     } catch (error) {
-      console.error('Failed to fetch session:', error);
+      console.error('Sign in error:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-
-    setLoading(true)
-
-    setUser({email: email, id: "iadnv"});
-    setLoading(false)
-
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNINENDPOINT`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password }),
-    //   });
-    //   if (response.ok) {
-    //     const userData = await response.json();
-    //     setUser(userData);
-    //   } else {
-    //     throw new Error('Sign in failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign in error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
-  };
-
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (data: SignUpUser) => {
+    console.log('Sending signup data:', JSON.stringify(data, null, 2));
     
-    setUser({email: "a@gmail.com", id: "iadnv"});
-
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNUPENDPOINT`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password }),
-    //   });
-    //   if (response.ok) {
-    //     const userData = await response.json();
-    //     setUser(userData);
-    //   } else {
-    //     throw new Error('Sign up failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign up error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        const errorData = await response.json();
+        console.error('Server response:', response.status, errorData);
+        throw new Error(errorData.message || 'Sign up failed');
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
