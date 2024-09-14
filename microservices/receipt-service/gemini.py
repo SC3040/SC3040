@@ -5,6 +5,7 @@ import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
 from Receipt import Receipt, ReceiptError
+from ReceiptParser import ReceiptParser
 
 # Define the template of the return json obj
 # Method 1
@@ -37,8 +38,8 @@ receipt_schema = genai.protos.Schema(
                 type=genai.protos.Type.OBJECT,
                 properties={
                     'item_name': genai.protos.Schema(type=genai.protos.Type.STRING),
+                    'item_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
                     'item_quantity': genai.protos.Schema(type=genai.protos.Type.NUMBER),
-                    'item_cost': genai.protos.Schema(type=genai.protos.Type.STRING)
                 }
             )
         )
@@ -47,12 +48,13 @@ receipt_schema = genai.protos.Schema(
 )
 
 
-class ReceiptParser:
+class GeminiReceiptParser:
         def __init__(self, api_key: str, model_version: str = 'models/gemini-1.5-flash'):
                 # Configure the API key
                 genai.configure(api_key=api_key)
                 # Setup model config
-                self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt."""
+                self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
+If the image given is not a receipt, please return None."""
                 self.generation_config = genai.types.GenerationConfig(
                         candidate_count=1, # Only need 1 candidate
                         stop_sequences=None, # Dont need to control model to stop
@@ -83,7 +85,7 @@ class ReceiptParser:
                 self.buffer = 512
 
         def get_token_count(self, prompt):
-                return self.model.count_tokens(prompt)
+                return int(self.model.count_tokens(prompt).total_tokens)
 
         def parse(self, img_obj: FileStorage):
                 # Define prompt
@@ -95,8 +97,8 @@ category: The category of spending (Transport, Clothing, Healthcare, Food, Leisu
 date: The date of the receipt
 itemized_list: A list of line items, each containing:
     item_name: The name of the item
-    item_quantity: The quantity of the item
     item_cost: The cost of the item
+    item_quantity: The quantity of the item
 """.strip()
                 # Load the image
                 receipt_image = PIL.Image.open(img_obj)
@@ -107,16 +109,25 @@ itemized_list: A list of line items, each containing:
                                                            safety_settings=self.safety_settings)
 
                 for attempt_num in range(self.max_retry):
+                    # If model returns None, means image is not a receipt
+                    if self.response.text.strip() == 'None':
+                        return None
+
+                    # Attempt to parse the receipt
                     try:
                         receipt_dict = json.loads(self.response.text)
+                        print(receipt_dict)
                         receipt_instance = Receipt(**receipt_dict)
                         print(f"Attempt {attempt_num + 1} Success")
+                        print(receipt_instance.to_dict())
+
                         return receipt_instance
                     except ReceiptError as e:
                         print(f"Attempt {attempt_num + 1} Error: {e}")
 
+                        # If max retry reached or token limit reached, return None
                         if (attempt_num + 1 == self.max_retry or
-                                self.response.usage_metadata['total_token_count'] +
+                                self.response.usage_metadata.total_token_count +
                                 self.get_token_count(str(e)) + self.buffer >
                                 self.model_info.input_token_limit):
                             print("Max retry reached. Unable to parse receipt.")

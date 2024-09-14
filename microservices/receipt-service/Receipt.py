@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import List
 from dateutil import parser
+from dateutil.parser import ParserError
 from price_parser import Price
+import json
 
 
 class ReceiptError(Exception):
@@ -28,14 +30,22 @@ class Category(Enum):
         except ValueError:
             raise ReceiptError("category", f"Invalid category '{value}'. The valid categories are: {', '.join([cat.value for cat in cls])}")
 
+
 class Item:
-    def __init__(self, item_name: str, item_quantity: float, item_cost: str):
+    def __init__(self, item_name: str, item_cost: str, item_quantity: int):
         self.item_name = item_name
         self.item_quantity = item_quantity
         self.item_cost = item_cost
 
     def __repr__(self):
         return f"Item(item_name={self.item_name}, item_quantity={self.item_quantity}, item_cost={self.item_cost})"
+
+    def to_dict(self):
+        return {
+            "item_name": self.item_name,
+            "item_quantity": self.item_quantity,
+            "item_cost": self.item_cost
+        }
 
 
 class Receipt:
@@ -48,6 +58,15 @@ class Receipt:
 
         # Additional validation
         self.validate_non_empty()
+
+    def to_dict(self):
+        return {
+            "merchant_name": self.merchant_name,
+            "date": self.date,
+            "total_cost": self.total_cost,
+            "category": self.category,
+            "itemized_list": [item.to_dict() for item in self.itemized_list]
+        }
 
     @property
     def date(self) -> str:
@@ -63,13 +82,13 @@ class Receipt:
 
     @property
     def itemized_list(self) -> List[Item]:
-        return [Item(item['item_name'], item['item_quantity'], str(item['item_cost'].amount)) for item in self._itemized_list]
-
+        return [Item(item['item_name'], item.get('item_quantity', 1), str(item['item_cost'].amount)) for item in self._itemized_list]
+#
     @staticmethod
     def parse_date(date_string: str):
         try:
             return parser.parse(date_string)
-        except ValueError:
+        except ParserError:
             raise ReceiptError("date", f"Invalid date format: '{date_string}'. If possible, provide a valid date in the format: 'YYYY-MM-DD'")
 
     @staticmethod
@@ -106,3 +125,15 @@ class Receipt:
     def __repr__(self):
         return (f"Receipt(merchant_name={self.merchant_name}, date={self.date}, total_cost={self.total_cost}, "
                 f"category={self.category}, itemized_list={self.itemized_list})")
+
+
+class ReceiptEncoder(json.JSONEncoder):
+    def default(self, obj):
+        # Call to_dict for custom types
+        if isinstance(obj, Receipt):
+            return obj.to_dict()
+        elif isinstance(obj, Item):
+            return obj.to_dict()
+        elif isinstance(obj, Enum):
+            return obj.value
+        return super().default(obj)
