@@ -30,6 +30,13 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
+    if not model:
+        return jsonify({'error': 'Missing model parameter'}), 400
+
+    if not api_key:
+        return jsonify({'error': 'Missing apiKey parameter'}), 400
+
+    # If file is present and correct type
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(filename)
@@ -39,7 +46,7 @@ def upload_file():
             # receipt_parser = ReceiptParser(os.environ['GOOGLE_API_KEY'])
             receipt_parser = GeminiReceiptParser(api_key)
         elif model == 'OPENAI':
-            pass
+            raise NotImplementedError
         else:
             return jsonify({'error': 'Unsupported model parameter received'}), 400
 

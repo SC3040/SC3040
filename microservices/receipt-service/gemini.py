@@ -5,10 +5,10 @@ import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
 from Receipt import Receipt, ReceiptError
-from ReceiptParser import ReceiptParser
 
 # Define the template of the return json obj
 # Method 1
+# Does not seem to work well, inconsistent results
 # class LineItemSchema(typing_extensions.TypedDict):
 #     item_name: str
 #     item_quantity: int
@@ -109,13 +109,16 @@ itemized_list: A list of line items, each containing:
                                                            safety_settings=self.safety_settings)
 
                 for attempt_num in range(self.max_retry):
-                    # If model returns None, means image is not a receipt
-                    if self.response.text.strip() == 'None':
-                        return None
-
                     # Attempt to parse the receipt
                     try:
                         receipt_dict = json.loads(self.response.text)
+
+                        # If model returns None for all fields, return None
+                        if (receipt_dict['merchant_name'] == 'None' and receipt_dict['total_cost'] == 'None' and
+                                receipt_dict['date'] == 'None' and receipt_dict['category'] == 'Others' and
+                                receipt_dict['itemized_list'] == []):
+                            return None
+
                         print(receipt_dict)
                         receipt_instance = Receipt(**receipt_dict)
                         print(f"Attempt {attempt_num + 1} Success")
@@ -137,4 +140,3 @@ itemized_list: A list of line items, each containing:
                         self.response = self.chat_instance.send_message([str(e)])
 
                 return receipt_instance
-
