@@ -1,12 +1,17 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { signIn, signUp, signOut } from '@/app/api/auth/route';
+import { useRouter } from 'next/navigation';
 
 type User = {
   id: string;
+  username: string;
   email: string;
-  // Add other user properties as needed
-};
+  firstName: string;
+  lastName: string;
+  image: string;
+}
 
 type SignInUser = {
   username: string;
@@ -22,10 +27,10 @@ type SignUpUser = {
 }
 
 type AuthContextType = {
-  user: User | null;
+  user: User | undefined;
   loading: boolean;
-  signIn: (data : SignInUser) => Promise<void>;
-  signUp: (data : SignUpUser) => Promise<void>;
+  signIn: (data: SignInUser) => Promise<void>;
+  signUp: (data: SignUpUser) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -40,26 +45,19 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-
-  const signIn = async (data: SignInUser) => {
+  const handleSignIn = async (data: SignInUser) => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        
+      const result = await signIn(data);
+      if (result.success) {
+        setUser(result.user);
+        router.push('/home');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Sign in failed');
+        throw new Error(result.error);
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -69,23 +67,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (data: SignUpUser) => {
-    console.log('Sending signup data:', JSON.stringify(data, null, 2));
-    
+  const handleSignUp = async (data: SignUpUser) => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+      const result = await signUp(data);
+      if (result.success) {
+        setUser(result.user);
+        router.push('/home');
       } else {
-        const errorData = await response.json();
-        console.error('Server response:', response.status, errorData);
-        throw new Error(errorData.message || 'Sign up failed');
+        throw new Error(result.error);
       }
     } catch (error) {
       console.error('Sign up error:', error);
@@ -95,31 +85,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async () => {
-
-    setUser(null);
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNOUTENDPOINT`, { method: 'POST'});
-    //   if (response.ok) {
-    //     setUser(null);
-    //   } else {
-    //     throw new Error('Sign out failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign out error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      const result = await signOut();
+      if (result.success) {
+        setUser(undefined);
+        router.push('/');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
     user,
     loading,
-    signIn,
-    signUp,
-    signOut,
+    signIn: handleSignIn,
+    signUp: handleSignUp,
+    signOut: handleSignOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
