@@ -30,7 +30,7 @@ receipt_schema = genai.protos.Schema(
         'total_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
         'category': genai.protos.Schema(
             type=genai.protos.Type.STRING,
-            enum=Category.__members__.keys()
+            enum=[category.value for category in Category]
         ),
         'itemized_list': genai.protos.Schema(
             type=genai.protos.Type.ARRAY,
@@ -56,8 +56,7 @@ class GeminiReceiptParser:
                 self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
 If the image given is not a receipt, please return Invalid category and ignore all other fields."""
 
-                # Init chat instance
-                self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
+                # Chat instance attributes
                 self.response = None
                 self.max_retry = 3
                 self.buffer = 512
@@ -85,6 +84,9 @@ If the image given is not a receipt, please return Invalid category and ignore a
                 self.model = genai.GenerativeModel(model_name=model_version, system_instruction=self.system_instruction,
                                                    generation_config=self.generation_config, safety_settings=self.safety_settings)
                 self.model_info = genai.get_model(model_version)
+
+                # Init chat instance
+                self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
 
         def get_token_count(self, prompt):
                 return int(self.model.count_tokens(prompt).total_tokens)
@@ -116,7 +118,7 @@ itemized_list: A list of line items, each containing:
                         receipt_dict = json.loads(self.response.text)
 
                         # If model returns None for all fields, return None
-                        if receipt_dict['category'] == Category.INVALID.name:
+                        if receipt_dict['category'] == Category.INVALID.value:
                             print("Image is not a receipt.")
                             return None
 

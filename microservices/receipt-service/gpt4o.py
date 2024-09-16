@@ -23,7 +23,7 @@ class ReceiptResponseSchema(BaseModel):
 
 class OpenAIReceiptParser:
     def __init__(self, api_key, model_version: str = 'gpt-4o-mini'):
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=api_key, max_retries=2, timeout=60.0)
         self.model_version = model_version
         self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
 If the image given is not a receipt, please return Invalid category and ignore all other fields."""
