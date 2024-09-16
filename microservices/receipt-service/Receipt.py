@@ -93,7 +93,7 @@ class Receipt:
     def parse_date(date_string: str):
         if date_string == "None":
             # Date cannot be found in the receipt, use today's date
-            return utils.today().date()
+            return utils.today(tzinfo=gettz("Asia/Singapore")).date()
         try:
             return parser.parse(date_string, dayfirst=True, tzinfos={"SGT": gettz("Asia/Singapore")})
         except ParserError:

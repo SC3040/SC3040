@@ -16,10 +16,7 @@ def app_client():
             yield client
 
 
-@pytest.fixture(scope="session")
-def receipt_images():
-    images_dir = Path(__file__).parent / 'test_images/receipts'
-
+def load_images(images_dir):
     images = {}
 
     for image_file in images_dir.iterdir():
@@ -33,6 +30,19 @@ def receipt_images():
                 images[image_file.name] = file_storage
 
     return images
+
+
+@pytest.fixture(scope="module")
+def receipt_images():
+    images_dir = Path(__file__).parent / 'test_images/receipts'
+    return load_images(images_dir)
+
+
+@pytest.fixture(scope="module")
+def non_receipt_images():
+    images_dir = Path(__file__).parent / 'test_images/non-receipts'
+    return load_images(images_dir)
+
 
 @pytest.fixture(scope='session')
 def receipt_image_ans():
@@ -82,4 +92,3 @@ def receipt_image_ans():
     }
 
     return ans_dict
-

@@ -26,7 +26,7 @@ class OpenAIReceiptParser:
         self.client = OpenAI(api_key=api_key, max_retries=2, timeout=60.0)
         self.model_version = model_version
         self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
-If the image given is not a receipt, please return Invalid category and ignore all other fields."""
+If the image given is not a receipt, please return Invalid category and ignore all other fields. If the values are not present, please return 'None' for them."""
 
         # Chat session specific attributes
         self.messages = []
@@ -45,6 +45,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
     def parse(self, img: FileStorage):
         # Define prompt
         prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
+If the values are not present, please return 'None' for them.
 
 merchant_name: The name of the merchant
 total_cost: The total cost of the receipt
@@ -77,6 +78,7 @@ itemized_list: A list of line items, each containing:
                 messages=self.messages,
                 **self.generation_config
             )
+            print(response)
             # Append response to messages
             response_content = response.choices[0].message.content
             self.append_message("assistant", response_content)
