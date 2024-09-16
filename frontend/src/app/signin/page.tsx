@@ -21,7 +21,6 @@ export default function SignInPage() {
         e.preventDefault()
         try {
             await signIn({username, password})
-            alert("Success signin")
             toast({ title: "Sign in success!" })
             router.push('/home')
         } catch (error: unknown) {
