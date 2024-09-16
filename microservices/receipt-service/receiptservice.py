@@ -4,6 +4,7 @@ import os
 from werkzeug.utils import secure_filename
 from gemini import GeminiReceiptParser
 from Receipt import ReceiptEncoder
+from gpt4o import OpenAIReceiptParser
 
 app = Flask(__name__)
 app.json_encoder = ReceiptEncoder
@@ -46,7 +47,7 @@ def upload_file():
             # receipt_parser = ReceiptParser(os.environ['GOOGLE_API_KEY'])
             receipt_parser = GeminiReceiptParser(api_key)
         elif model == 'OPENAI':
-            raise NotImplementedError
+            receipt_parser = OpenAIReceiptParser(api_key)
         else:
             return jsonify({'error': 'Unsupported model parameter received'}), 400
 
