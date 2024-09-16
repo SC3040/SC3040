@@ -10,6 +10,8 @@ RUN pip install google-generativeai==0.7.2
 RUN pip install Pillow==10.4.0
 RUN pip install python-dateutil==2.9.0
 RUN pip install price-parser==0.3.4
+RUN pip install openai==1.44.0
+RUN pip install tiktoken==0.7.0
 
 ENV PYTHONUNBUFFERED=1
 

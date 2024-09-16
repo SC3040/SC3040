@@ -22,13 +22,17 @@ class Category(Enum):
     LEISURE = 'Leisure'
     HOUSING = 'Housing'
     OTHERS = 'Others'
+    INVALID = 'Invalid' # Only used if the image is not a receipt
 
     @classmethod
     def validate_category(cls, value):
         try:
-            return cls(value)
+            category = cls(value)
+            if category == cls.INVALID:
+                raise ReceiptError("category", f"Invalid category should only be used when the image is not a receipt")
+            return category
         except ValueError:
-            raise ReceiptError("category", f"Invalid category '{value}'. The valid categories are: {', '.join([cat.value for cat in cls])}")
+            raise ReceiptError("category", f"Invalid category '{value}'. The valid categories are: {', '.join([cat.value for cat in cls if cat != cls.INVALID])}")
 
 
 class Item:

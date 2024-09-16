@@ -4,7 +4,7 @@ from werkzeug.datastructures import FileStorage
 import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
-from Receipt import Receipt, ReceiptError
+from Receipt import Receipt, ReceiptError, Category
 
 # Define the template of the return json obj
 # Method 1
@@ -30,7 +30,7 @@ receipt_schema = genai.protos.Schema(
         'total_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
         'category': genai.protos.Schema(
             type=genai.protos.Type.STRING,
-            enum=['Transport', 'Clothing', 'Healthcare', 'Food', 'Leisure', 'Housing', 'Others']
+            enum=[category.value for category in Category]
         ),
         'itemized_list': genai.protos.Schema(
             type=genai.protos.Type.ARRAY,
@@ -54,11 +54,18 @@ class GeminiReceiptParser:
                 genai.configure(api_key=api_key)
                 # Setup model config
                 self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
-If the image given is not a receipt, please return None."""
+If the image given is not a receipt, please return Invalid category and ignore all other fields."""
+
+                # Chat instance attributes
+                self.response = None
+                self.max_retry = 3
+                self.buffer = 512
+
+                # Generation config
                 self.generation_config = genai.types.GenerationConfig(
                         candidate_count=1, # Only need 1 candidate
                         stop_sequences=None, # Dont need to control model to stop
-                        max_output_tokens=512,
+                        max_output_tokens=self.buffer, # max number of tokens to generate, should be same as buffer
                         temperature=0.1, # Low temperature to because OCR is deterministic task
                         top_p=0.1, # Low top_p to because OCR is deterministic task
                         top_k=1, # Greedy decoding because OCR is deterministic task
@@ -80,20 +87,17 @@ If the image given is not a receipt, please return None."""
 
                 # Init chat instance
                 self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
-                self.response = None
-                self.max_retry = 3
-                self.buffer = 512
 
         def get_token_count(self, prompt):
                 return int(self.model.count_tokens(prompt).total_tokens)
 
         def parse(self, img_obj: FileStorage):
                 # Define prompt
-                prompt = """Given an image of a receipt, extract information from the receipt.
+                prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
 
 merchant_name: The name of the merchant
 total_cost: The total cost of the receipt
-category: The category of spending (Transport, Clothing, Healthcare, Food, Leisure, Housing, Others)
+category: The category of spending (Transport, Clothing, Healthcare, Food, Leisure, Housing, Others, Invalid). Only return Invalid if the image is not a receipt.
 date: The date of the receipt
 itemized_list: A list of line items, each containing:
     item_name: The name of the item
@@ -114,15 +118,12 @@ itemized_list: A list of line items, each containing:
                         receipt_dict = json.loads(self.response.text)
 
                         # If model returns None for all fields, return None
-                        if (receipt_dict['merchant_name'] == 'None' and receipt_dict['total_cost'] == 'None' and
-                                receipt_dict['date'] == 'None' and receipt_dict['category'] == 'Others' and
-                                receipt_dict['itemized_list'] == []):
+                        if receipt_dict['category'] == Category.INVALID.value:
+                            print("Image is not a receipt.")
                             return None
 
-                        print(receipt_dict)
                         receipt_instance = Receipt(**receipt_dict)
                         print(f"Attempt {attempt_num + 1} Success")
-                        print(receipt_instance.to_dict())
 
                         return receipt_instance
                     except ReceiptError as e:
@@ -137,6 +138,8 @@ itemized_list: A list of line items, each containing:
                             return None
 
                         # Continue the conversation, highlighting the error
-                        self.response = self.chat_instance.send_message([str(e)])
+                        self.response = self.chat_instance.send_message([str(e)],
+                                                                        generation_config=self.generation_config,
+                                                                        safety_settings=self.safety_settings)
 
                 return receipt_instance
