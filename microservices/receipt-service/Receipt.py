@@ -1,8 +1,9 @@
 from enum import Enum
 from typing import List
-from dateutil import parser
+from dateutil import parser, utils
 from dateutil.parser import ParserError
 from price_parser import Price
+from dateutil.tz import gettz
 import json
 
 
@@ -38,8 +39,8 @@ class Category(Enum):
 class Item:
     def __init__(self, item_name: str, item_cost: str, item_quantity: int):
         self.item_name = item_name
-        self.item_quantity = item_quantity
         self.item_cost = item_cost
+        self.item_quantity = item_quantity
 
     def __repr__(self):
         return f"Item(item_name={self.item_name}, item_quantity={self.item_quantity}, item_cost={self.item_cost})"
@@ -47,8 +48,8 @@ class Item:
     def to_dict(self):
         return {
             "item_name": self.item_name,
+            "item_cost": self.item_cost,
             "item_quantity": self.item_quantity,
-            "item_cost": self.item_cost
         }
 
 
@@ -86,12 +87,15 @@ class Receipt:
 
     @property
     def itemized_list(self) -> List[Item]:
-        return [Item(item['item_name'], item.get('item_quantity', 1), str(item['item_cost'].amount)) for item in self._itemized_list]
+        return [Item(item['item_name'], str(item['item_cost'].amount), item.get('item_quantity', 1)) for item in self._itemized_list]
 #
     @staticmethod
     def parse_date(date_string: str):
+        if date_string == "None":
+            # Date cannot be found in the receipt, use today's date
+            return utils.today().date()
         try:
-            return parser.parse(date_string)
+            return parser.parse(date_string, dayfirst=True, tzinfos={"SGT": gettz("Asia/Singapore")})
         except ParserError:
             raise ReceiptError("date", f"Invalid date format: '{date_string}'. If possible, provide a valid date in the format: 'YYYY-MM-DD'")
 

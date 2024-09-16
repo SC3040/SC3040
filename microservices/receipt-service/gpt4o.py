@@ -84,7 +84,6 @@ itemized_list: A list of line items, each containing:
             try:
                 # Parse json response
                 receipt_dict = json.loads(response_content)
-                print(receipt_dict)
 
                 # If model returns invalid category, return None
                 if receipt_dict['category'] == Category.INVALID.value:
