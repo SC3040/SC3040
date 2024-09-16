@@ -14,7 +14,9 @@ async function bootstrap() {
   // Set up CORS
   app.enableCors({
     origin: 'http://localhost:3000',
-    credentials: true, // Allow cookies to be included in requests
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
   const options = new DocumentBuilder()
