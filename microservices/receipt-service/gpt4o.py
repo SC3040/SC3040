@@ -93,7 +93,7 @@ itemized_list: A list of line items, each containing:
 
                 receipt_instance = Receipt(**receipt_dict)
                 print(f"Attempt {attempt_num + 1} Success")
-
+                return receipt_instance
             except ReceiptError as e:
                 print(f"Attempt {attempt_num + 1} Error: {e}")
 
