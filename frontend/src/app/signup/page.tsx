@@ -82,6 +82,10 @@ export default function SignUpPage() {
                         Already have an account?{' '}
                         <Link href="/signin" className="text-primary hover:underline">Sign In</Link>
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                        Forgot your password?{' '}
+                        <Link href="/forgot-password" className="text-primary hover:underline">Reset Password</Link>
+                    </p>
                     <p className="text-xs text-muted-foreground text-center">
                         By signing up, you agree to our{' '}
                         <a href="#" className="text-primary hover:underline">Terms of Service</a>
