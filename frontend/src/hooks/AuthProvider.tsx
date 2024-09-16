@@ -78,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        // credentials: 'include',
       });
       if (response.ok) {
         const userData = await response.json();
@@ -96,22 +97,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-
-    setUser(null);
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNOUTENDPOINT`, { method: 'POST'});
-    //   if (response.ok) {
-    //     setUser(null);
-    //   } else {
-    //     throw new Error('Sign out failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign out error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        setUser(null);
+        window.location.href = '/';
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Sign out failed');
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
