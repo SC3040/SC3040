@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   Logger,
   Res,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -28,7 +29,7 @@ import {
   ApiConsumes,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 
 @ApiTags('users')
 @Controller('users')
@@ -133,5 +134,34 @@ export class UserController {
     });
 
     return user;
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Log out the current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully logged out.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'User not logged in.',
+  })
+  @HttpCode(200)
+  logout(@Res({ passthrough: true }) res: Response, @Req() req: Request): void {
+    // Check if JWT cookie exists
+    const jwtToken = req.cookies?.jwt;
+
+    if (!jwtToken) {
+      // If no JWT token is found, return 401
+      res.status(401).json({ message: 'User not logged in.' });
+      return;
+    }
+
+    // Clear the JWT cookie
+    res.cookie('jwt', '', {
+      httpOnly: true, // Secure from JavaScript access
+      sameSite: 'strict', // Helps mitigate CSRF
+      expires: new Date(0), // Set the cookie expiration to the past to delete it
+    });
   }
 }
