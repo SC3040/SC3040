@@ -26,9 +26,9 @@ export const sideBarLinks = [
     {
         id: "navLink2",
         position: "top",
-        label: "Dashboard",
-        route: "/dashboard",
-        icon: "/icons/dashboard.svg",
+        label: "Transactions",
+        route: "/transactions",
+        icon: "/icons/transactions.svg",
     },
     {
         id: "navLink3",

@@ -1,18 +1,36 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { signIn, signUp, signOut } from '@/app/api/auth/route';
+import { useRouter } from 'next/navigation';
 
 type User = {
   id: string;
+  username: string;
   email: string;
-  // Add other user properties as needed
-};
+  firstName: string;
+  lastName: string;
+  image: string;
+}
+
+type SignInUser = {
+  username: string;
+  password: string;
+}
+
+type SignUpUser = {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+}
 
 type AuthContextType = {
-  user: User | null;
+  user: User | undefined;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (data: SignInUser) => Promise<void>;
+  signUp: (data: SignUpUser) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -27,106 +45,69 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    // Check if the user is already logged in
-    checkUserSession();
-  }, []);
-
-  const checkUserSession = async () => {
+  const handleSignIn = async (data: SignInUser) => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/auth/session');
-      if (response.ok) {
-        const session = await response.json();
-        setUser(session.user);
+      const result = await signIn(data);
+      if (result.success) {
+        setUser(result.user);
+        router.push('/home');
+      } else {
+        throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Failed to fetch session:', error);
+      console.error('Sign in error:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-
-    setLoading(true)
-
-    setUser({email: email, id: "iadnv"});
-    setLoading(false)
-
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNINENDPOINT`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password }),
-    //   });
-    //   if (response.ok) {
-    //     const userData = await response.json();
-    //     setUser(userData);
-    //   } else {
-    //     throw new Error('Sign in failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign in error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
+  const handleSignUp = async (data: SignUpUser) => {
+    setLoading(true);
+    try {
+      const result = await signUp(data);
+      if (result.success) {
+        setUser(result.user);
+        router.push('/home');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const signUp = async (email: string, password: string) => {
-    
-    setUser({email: "a@gmail.com", id: "iadnv"});
-
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNUPENDPOINT`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password }),
-    //   });
-    //   if (response.ok) {
-    //     const userData = await response.json();
-    //     setUser(userData);
-    //   } else {
-    //     throw new Error('Sign up failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign up error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
-  };
-
-  const signOut = async () => {
-
-    setUser(null);
-    // setLoading(true);
-    // try {
-    //   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/TODOSIGNOUTENDPOINT`, { method: 'POST'});
-    //   if (response.ok) {
-    //     setUser(null);
-    //   } else {
-    //     throw new Error('Sign out failed');
-    //   }
-    // } catch (error) {
-    //   console.error('Sign out error:', error);
-    //   throw error;
-    // } finally {
-    //   setLoading(false);
-    // }
+  const handleSignOut = async () => {
+    setLoading(true);
+    try {
+      const result = await signOut();
+      if (result.success) {
+        setUser(undefined);
+        router.push('/');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
     user,
     loading,
-    signIn,
-    signUp,
-    signOut,
+    signIn: handleSignIn,
+    signUp: handleSignUp,
+    signOut: handleSignOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

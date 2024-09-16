@@ -27,4 +27,5 @@ This project is part of the SC3040 Advanced Software Engineering course.
    ```
    docker-compose up --build
    ```
-4. Access frontend at `http://localhost:3000`
+4. Access Frontend UI at `http://localhost:3000`
+5. Access MongoDB instance at `mongodb://root:secret@localhost:27017/expense_note?authSource=admin`
