@@ -39,7 +39,7 @@ receipt_schema = genai.protos.Schema(
                 properties={
                     'item_name': genai.protos.Schema(type=genai.protos.Type.STRING),
                     'item_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
-                    'item_quantity': genai.protos.Schema(type=genai.protos.Type.NUMBER),
+                    'item_quantity': genai.protos.Schema(type=genai.protos.Type.STRING),
                 }
             )
         )
@@ -54,7 +54,7 @@ class GeminiReceiptParser:
                 genai.configure(api_key=api_key)
                 # Setup model config
                 self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
-If the image given is not a receipt, please return Invalid category and ignore all other fields."""
+If the image given is not a receipt, please return Invalid category and ignore all other fields. If the values are not present, please return 'None' for them."""
 
                 # Chat instance attributes
                 self.response = None
@@ -94,6 +94,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
         def parse(self, img_obj: FileStorage):
                 # Define prompt
                 prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
+If the values are not present, please return 'None' for them.
 
 merchant_name: The name of the merchant
 total_cost: The total cost of the receipt

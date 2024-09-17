@@ -11,7 +11,7 @@ services:
       - ./frontend:/src/frontend
       - /src/frontend/node_modules
     environment:
-      - BACKEND_URL=http://core-service:8080
+      - BACKEND_URL=http://backend:8080
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
       - NEXT_PUBLIC_RECEIPT_SERVICE_URL=http://localhost:8081
     develop:
@@ -38,27 +38,29 @@ services:
     ports:
       - '27017:27017'
     volumes:
-      - ./microservices/core-service/data-seed:/data
+      - ./backend/data-seed:/data
     networks:
       - app-network
 
-  core-service:
+  backend:
     build:
-      context: ./microservices/core-service
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     depends_on:
       - mongodb
     volumes:
-      - ./microservices/core-service:/src/core-service # Sync the source code to /src/core-service
-      - /src/core-service/node_modules # Prevent node_modules from being overwritten
+      - ./backend:/src/backend # Sync the source code to /src/backend
+      - /src/backend/node_modules # Prevent node_modules from being overwritten
     environment:
       - PORT=8080
-      - APP_NAME=core-service
+      - APP_NAME=backend
       - ENVIRONMENT=development
       - MONGODB_URI=mongodb://root:secret@mongodb:27017/expense_note?authSource=admin
       - JWT_SECRET=61d4c914418d42a14701d76e9c76acdf1fa86d4eaa24a2df7bb9ccb2460a0934fb0a560b6410911b5d9f89ceb7037ade7f24a991c472e85ae7f0105e899b9595
+    env_file:
+      - .env
     networks:
       - app-network
 
@@ -69,7 +71,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - core-service
+      - backend
     volumes:
       - ./microservices/receipt-service:/src/receipt-service
     environment:
