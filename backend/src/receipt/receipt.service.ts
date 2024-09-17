@@ -9,6 +9,7 @@ import * as FormData from 'form-data';
 import { Binary, ObjectId } from 'mongodb';
 import axios from 'axios';
 import * as fs from 'node:fs';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class ReceiptService {
@@ -27,10 +28,12 @@ export class ReceiptService {
   constructor(
     @InjectRepository(ReceiptEntity)
     private readonly receiptRepository: Repository<ReceiptEntity>,
+    private readonly userService: UserService,
   ) {}
 
   // Stage 1: Process receipt image and return data without saving
   async processReceipt(
+    userId: string,
     image: Express.Multer.File,
   ): Promise<ReceiptResponseDto> {
     if (!image) {
@@ -38,7 +41,7 @@ export class ReceiptService {
     }
 
     // Send the image directly to Flask for processing (no need for Binary conversion)
-    const flaskResponse = await this.processReceiptWithFlask(image);
+    const flaskResponse = await this.processReceiptWithFlask(userId, image);
     this.logger.log('Flask Response:', JSON.stringify(flaskResponse));
 
     // Map Flask response fields to internal naming convention
@@ -65,21 +68,34 @@ export class ReceiptService {
   ): Promise<ReceiptResponseDto> {
     let binaryImage: Binary;
 
-    if (createReceiptDto.image) {
+    if (createReceiptDto.image && createReceiptDto.image.buffer) {
       binaryImage = new Binary(Buffer.from(createReceiptDto.image.buffer));
     } else {
+      // Fallback to default image if no valid image is provided
       const defaultImage = fs.readFileSync(this.defaultImagePath);
       binaryImage = new Binary(defaultImage);
     }
 
-    // Map the DTO to the entity and store it in the database
-    const receiptEntity = plainToInstance(ReceiptEntity, {
-      ...createReceiptDto,
-      image: binaryImage,
-      userId: new ObjectId(userId),
-    });
+    this.logger.log('original userId:', userId);
 
+    // // Map the DTO to the entity and store it in the database
+    // const receiptEntity = plainToInstance(ReceiptEntity, {
+    //   ...createReceiptDto,
+    //   image: binaryImage,
+    //   userId: userId,
+    // });
+
+    // Create a new ReceiptEntity instance
+    const receiptEntity = new ReceiptEntity();
+
+    // Manually assign properties
+    Object.assign(receiptEntity, createReceiptDto);
+    receiptEntity.image = binaryImage;
+    receiptEntity.userId = userId; // Assign the userId as a string
+
+    this.logger.log('before saving in db, userId:', receiptEntity.userId);
     const savedReceipt = await this.receiptRepository.save(receiptEntity);
+    this.logger.log('after saving in db, userId:', savedReceipt.userId);
     return this.buildReceiptResponse(savedReceipt);
   }
 
@@ -143,22 +159,48 @@ export class ReceiptService {
   // Get all receipts for a user
   async getReceiptsByUser(userId: string): Promise<ReceiptResponseDto[]> {
     const receipts = await this.receiptRepository.find({
-      where: { userId: new ObjectId(userId) },
+      where: { userId: userId },
     });
     return receipts.map((receipt) => this.buildReceiptResponse(receipt));
   }
 
   private async processReceiptWithFlask(
+    userId: string, // Add userId parameter
     image: Express.Multer.File,
   ): Promise<any> {
+    // Fetch the user's API token information
+    const user = await this.userService.findEntityById(userId);
+    if (!user || !user.apiToken) {
+      throw new HttpException(
+        'User or API token not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Determine model and API key
+    const model = user.apiToken.defaultModel;
+    let apiKey: string;
+    try {
+      apiKey = this.userService.getDecryptedApiKey(user, model);
+    } catch {
+      throw new HttpException(
+        'API key not set for the selected model',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const formData = new FormData();
 
-      // Append the image to the form data
+      // Append the image as a file
       formData.append('file', image.buffer, {
-        filename: image.originalname, // Use the original filename
-        contentType: image.mimetype, // Use the correct mime type from the file
+        filename: image.originalname,
+        contentType: image.mimetype,
       });
+
+      // Append model and apiKey to form data
+      formData.append('model', model);
+      formData.append('apiKey', apiKey);
 
       const response = await axios.post(
         'http://receipt-service:8081/upload',
@@ -172,8 +214,6 @@ export class ReceiptService {
     } catch (error) {
       this.logger.error('Error processing receipt with Flask', error.message);
       this.logger.error('Full error stack:', error.stack);
-
-      console.log(error);
 
       throw new HttpException(
         'Receipt processing failed',

@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UsePipes,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
 import { ReceiptService } from './receipt.service';
 import { CreateReceiptDto, UpdateReceiptDto, ReceiptResponseDto } from './dto';
@@ -21,15 +22,18 @@ import {
   ApiOperation,
   ApiResponse,
   ApiConsumes,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 @ApiTags('receipts')
 @Controller('receipts')
 export class ReceiptController {
+  private readonly logger = new Logger(ReceiptController.name);
   constructor(private readonly receiptService: ReceiptService) {}
 
   // Stage 1: Process receipt image and return details without saving
   @Post('process')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Upload receipt image for processing (does not store the receipt)',
   })
@@ -39,16 +43,27 @@ export class ReceiptController {
     description: 'Receipt image processed successfully and data returned.',
     type: ReceiptResponseDto,
   })
+  @ApiResponse({
+    status: 404,
+    description: 'User or API token not found.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'API key not set for the primary model.',
+  })
   @UseInterceptors(FileInterceptor('image'))
   async processReceipt(
+    @User('_id') userId: string,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ReceiptResponseDto> {
-    return this.receiptService.processReceipt(image);
+    this.logger.log('Extracted user ID from decorator:', userId);
+    return this.receiptService.processReceipt(userId, image);
   }
 
   // Stage 2: Confirm and create receipt in the database
-  @UsePipes(new ValidationPipe())
+  // @UsePipes(new ValidationPipe())
   @Post('create')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create receipt with the confirmed details' })
   @ApiResponse({
     status: 201,
@@ -59,11 +74,13 @@ export class ReceiptController {
     @User('_id') userId: string,
     @Body() createReceiptDto: CreateReceiptDto,
   ): Promise<ReceiptResponseDto> {
+    this.logger.log('Extracted user ID from decorator:', userId);
     return this.receiptService.createReceipt(userId, createReceiptDto);
   }
 
   @UsePipes(new ValidationPipe())
   @Put(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update receipt' })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({
@@ -87,6 +104,7 @@ export class ReceiptController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete receipt' })
   @ApiResponse({ status: 204, description: 'Receipt successfully deleted.' })
   @HttpCode(204)
@@ -107,6 +125,7 @@ export class ReceiptController {
   async getReceiptsByUser(
     @User('_id') userId: string,
   ): Promise<ReceiptResponseDto[]> {
+    this.logger.log('Extracted user ID from decorator:', userId);
     return this.receiptService.getReceiptsByUser(userId);
   }
 }
