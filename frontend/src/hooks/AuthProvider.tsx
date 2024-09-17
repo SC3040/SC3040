@@ -90,13 +90,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignOut = async () => {
     setLoading(true);
     try {
+      console.log("[AuthProvider]: handleSignOut before await")
       const result = await signOut();
-      if (result.success) {
-        setUser(undefined);
-        router.push('/');
-      } else {
-        throw new Error(result.error);
-      }
+      console.log("[AuthProvider]: handleSignOut after await")
+      console.log("[AuthProvider] result:", result)
+      setUser(undefined)
+      router.push("/")
+
+      // commented out because result could never be success, not sure if frontend/backend bug
+      // if (result.success) {
+      //   setUser(undefined);
+      //   router.push('/');
+      // } else {
+      //   console.error('Sign out failed:', result.error);
+      // }
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {

@@ -3,11 +3,12 @@ import { NextRequest } from 'next/server'
 import { PUBLIC_PATHS } from "@/constants"
  
 export function middleware(request: NextRequest) {
-  const accessToken : string | undefined = request.cookies.get('jwt')?.value
-  
-  console.log(`Inside middleware with accessToken: ${accessToken}`)
-    // const accessToken = "TOREMOVE"
 
+  // const allCookies = request.cookies.getAll();
+  // console.log(`[Middleware] All cookies:`, allCookies);
+
+  const jwt = request.cookies.get('jwt');
+  console.log(`[Middleware] JWT cookie:`, jwt);
 
   const path : string = request.nextUrl.pathname
 
@@ -17,14 +18,14 @@ export function middleware(request: NextRequest) {
   }
   
   // redirect unauthenticated users to sign in page if they try to access protected pages
-  if (accessToken === undefined && !isPublicPath(path)) {
+  if (jwt === undefined && !isPublicPath(path)) {
       const prevPath : string = encodeURIComponent(path)
       return NextResponse.redirect(new URL(`/signin?from=${prevPath}`, request.url))
   }
 
   // redirect authenticated users entering public path to home page
   // Exclude '/home' from this check
-  if (accessToken !== undefined && isPublicPath(path) && path !== '/home') {
+  if (jwt !== undefined && isPublicPath(path) && path !== '/home') {
       return NextResponse.redirect(new URL('/home', request.url))
   }
 

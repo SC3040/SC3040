@@ -21,7 +21,6 @@ const Sidebar: React.FC = () => {
         setIsOpen(false);
         if (linkLabel === "Sign Out") {
             signOut();
-            router.push('/');
         } else {
             router.push(route);
         }
