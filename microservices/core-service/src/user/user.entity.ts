@@ -50,18 +50,64 @@ export class UserEntity {
   @Column()
   password: string;
 
+  @ApiProperty({
+    description: 'Security question for password recovery',
+    example: 'What was the name of your first pet?',
+  })
+  @Column()
+  securityQuestion: string;
+
+  @ApiProperty({
+    description: 'Hashed answer to the security question',
+  })
+  @Column()
+  securityAnswer: string;
+
+  @ApiProperty({
+    description: 'Token used for password reset verification',
+    example: 'c02d1e8a-7861-4f0c-93f3-ff63b40eb6e8',
+    writeOnly: true,
+  })
+  @Column()
+  passwordResetToken: string;
+
+  @ApiProperty({
+    description: 'Expiration date and time for the password reset token',
+    example: '2024-09-30T18:30:00Z',
+    writeOnly: true,
+  })
+  @Column()
+  passwordResetTokenExpiry: Date;
+
   // Hash the password before inserting it into the database
   @BeforeInsert()
   async hashPasswordBeforeInsert() {
     this.password = await argon2.hash(this.password);
   }
 
-  // Hash the password before updating the user, but only if it's new
+  // Hash the password before updating the user, but only if it's different
   @BeforeUpdate()
   async hashPasswordBeforeUpdate() {
     const isPasswordHashed = this.password.startsWith('$argon2');
     if (!isPasswordHashed) {
       this.password = await argon2.hash(this.password);
+    }
+  }
+
+  // Hash the security answer before inserting it into the database
+  @BeforeInsert()
+  async hashSecurityAnswerBeforeInsert() {
+    this.securityAnswer = await argon2.hash(this.securityAnswer.toLowerCase());
+  }
+
+  // Hash the security answer before updating the user, but only if it's different
+  @BeforeUpdate()
+  async hashSecurityAnswerBeforeUpdate() {
+    const isSecurityAnswerHashed = this.securityAnswer.startsWith('$argon2');
+    if (!isSecurityAnswerHashed) {
+      this.securityAnswer = await argon2.hash(
+        this.securityAnswer.toLowerCase(),
+      );
     }
   }
 }

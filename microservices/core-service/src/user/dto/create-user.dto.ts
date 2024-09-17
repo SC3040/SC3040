@@ -49,4 +49,18 @@ export class CreateUserDto {
   })
   @IsOptional()
   image?: Express.Multer.File; // Binary image file
+
+  @ApiProperty({
+    description: 'Security question for password recovery',
+    example: 'What was the name of your first pet?',
+  })
+  @IsNotEmpty()
+  readonly securityQuestion: string;
+
+  @ApiProperty({
+    description: 'Answer to the security question',
+    example: 'Rex',
+  })
+  @IsNotEmpty()
+  readonly securityAnswer: string;
 }
