@@ -18,8 +18,8 @@ export class UserModule {
     consumer
       .apply(AuthMiddleware)
       .forRoutes(
-        { path: 'users', method: RequestMethod.GET },
-        { path: 'users', method: RequestMethod.PUT },
+        { path: 'users*', method: RequestMethod.GET },
+        { path: 'users*', method: RequestMethod.PUT },
       );
   }
 }

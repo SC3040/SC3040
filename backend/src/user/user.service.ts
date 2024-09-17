@@ -10,6 +10,8 @@ import {
   RequestPasswordResetDto,
   VerifySecurityQuestionDto,
   ResetPasswordDto,
+  UpdateApiTokenDto,
+  ApiTokenResponseDto,
 } from './dto';
 import { plainToInstance } from 'class-transformer';
 import * as jwt from 'jsonwebtoken';
@@ -142,6 +144,44 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return this.buildUserResponse(user);
+  }
+
+  // Update API tokens
+  async updateApiToken(
+    id: string,
+    updateApiTokenDto: UpdateApiTokenDto,
+  ): Promise<void> {
+    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
+    this.logger.log('updateApiToken: Created ObjectId from string', objectId);
+    const user = await this.userRepository.findOneBy({ _id: objectId });
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    user.apiToken = {
+      ...user.apiToken,
+      ...updateApiTokenDto,
+    };
+    await this.userRepository.save(user);
+  }
+
+  // Retrieve API tokens
+  async getApiToken(id: string): Promise<ApiTokenResponseDto> {
+    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
+    this.logger.log('getApiToken: Created ObjectId from string', objectId);
+    const user = await this.userRepository.findOneBy({ _id: objectId });
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Create the response object
+    const apiTokenData = {
+      defaultModel: user.apiToken?.defaultModel || 'UNSET',
+      geminiKey: user.apiToken?.geminiKey ? 'SET' : 'UNSET',
+      openaiKey: user.apiToken?.openaiKey ? 'SET' : 'UNSET',
+    };
+
+    // Map to ApiTokenResponseDto
+    return plainToInstance(ApiTokenResponseDto, apiTokenData);
   }
 
   // Authenticate user during login

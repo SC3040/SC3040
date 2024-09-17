@@ -79,6 +79,23 @@ export class UserEntity {
   @Column()
   passwordResetTokenExpiry: Date;
 
+  // Nested object for API tokens
+  @ApiProperty({
+    description: 'API tokens for external services',
+    type: 'object',
+    example: {
+      defaultModel: 'GEMINI',
+      geminiKey: 'encrypted_key',
+      openaiKey: 'encrypted_key',
+    },
+  })
+  @Column({ type: 'json', nullable: true }) // Store as a JSON object
+  apiToken?: {
+    defaultModel: string;
+    geminiKey: string;
+    openaiKey: string;
+  };
+
   // Hash the password before inserting it into the database
   @BeforeInsert()
   async hashPasswordBeforeInsert() {
@@ -108,6 +125,38 @@ export class UserEntity {
       this.securityAnswer = await argon2.hash(
         this.securityAnswer.toLowerCase(),
       );
+    }
+  }
+
+  // Hash the API keys before inserting into the database
+  @BeforeInsert()
+  async hashApiTokensBeforeInsert() {
+    if (this.apiToken) {
+      if (this.apiToken.geminiKey) {
+        this.apiToken.geminiKey = await argon2.hash(this.apiToken.geminiKey);
+      }
+      if (this.apiToken.openaiKey) {
+        this.apiToken.openaiKey = await argon2.hash(this.apiToken.openaiKey);
+      }
+    }
+  }
+
+  // Hash the API keys before updating the user, but only if they're different
+  @BeforeUpdate()
+  async hashApiTokensBeforeUpdate() {
+    if (this.apiToken) {
+      if (
+        this.apiToken.geminiKey &&
+        !this.apiToken.geminiKey.startsWith('$argon2')
+      ) {
+        this.apiToken.geminiKey = await argon2.hash(this.apiToken.geminiKey);
+      }
+      if (
+        this.apiToken.openaiKey &&
+        !this.apiToken.openaiKey.startsWith('$argon2')
+      ) {
+        this.apiToken.openaiKey = await argon2.hash(this.apiToken.openaiKey);
+      }
     }
   }
 }
