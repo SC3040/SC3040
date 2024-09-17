@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from '@/hooks/AuthProvider'
+import { useFetchSecurityQuestions } from '@/hooks/useFetchSecurityQuestions';
 import Link from 'next/link'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -18,13 +20,20 @@ export default function SignUpPage() {
         firstName: '',
         lastName: '',
         password: '',
+        securityQuestion: '',
+        securityAnswer: '',
     })
     const { toast } = useToast()
     const { signUp, loading } = useAuth();
+    const { isLoading, error, securityQuestions } = useFetchSecurityQuestions();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    }
+
+    const handleSelectChange = (value: string) => {
+        setFormData(prev => ({ ...prev, securityQuestion: value }));
     }
 
     const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -48,6 +57,12 @@ export default function SignUpPage() {
         }
     }
 
+    const formatLabel = (field: string) => {
+        if (field === 'firstName') return 'First Name';
+        if (field === 'lastName') return 'Last Name';
+        return field.charAt(0).toUpperCase() + field.slice(1);
+    }
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
             <Card className="w-full max-w-[400px]">
@@ -60,7 +75,7 @@ export default function SignUpPage() {
                         <div className="space-y-4">
                             {['username', 'email', 'firstName', 'lastName', 'password'].map((field) => (
                                 <div key={field} className="space-y-2">
-                                    <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
+                                    <Label htmlFor={field}>{formatLabel(field)}</Label>
                                     <Input
                                         id={field}
                                         name={field}
@@ -71,6 +86,32 @@ export default function SignUpPage() {
                                     />
                                 </div>
                             ))}
+                            <div className="space-y-2">
+                                <Label htmlFor="securityQuestion">Security Question</Label>
+                                <Select onValueChange={handleSelectChange} required>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a security question" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {securityQuestions.map((question, index) => (
+                                            <SelectItem key={index} value={question}>
+                                                {question}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="securityAnswer">Security Answer</Label>
+                                <Input
+                                    id="securityAnswer"
+                                    name="securityAnswer"
+                                    type="text"
+                                    value={formData.securityAnswer}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
                         </div>
                         <Button type="submit" className="w-full mt-6" disabled={loading}>
                             {loading ? "Signing Up..." : "Sign Up"}

@@ -24,6 +24,8 @@ type SignUpUser = {
   firstName: string;
   lastName: string;
   password: string;
+  securityQuestion: string;
+  securityAnswer: string;
 }
 
 type AuthContextType = {

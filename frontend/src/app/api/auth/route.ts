@@ -56,7 +56,6 @@ export async function signIn(data: SignInUser) {
 
 export async function signUp(data: SignUpUser) {
 
-  
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/register`, {
       method: 'POST',
@@ -93,7 +92,6 @@ export async function signUp(data: SignUpUser) {
 }
 
 export async function signOut() {
-  'use server'
   
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/logout`, {
