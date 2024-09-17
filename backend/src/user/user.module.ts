@@ -17,6 +17,10 @@ export class UserModule {
     // no need for POST methods to be protected (register & login)
     consumer
       .apply(AuthMiddleware)
+      .exclude(
+        { path: 'users/security-questions', method: RequestMethod.GET },
+        { path: 'users/get-security-question', method: RequestMethod.GET },
+      )
       .forRoutes(
         { path: 'users*', method: RequestMethod.GET },
         { path: 'users*', method: RequestMethod.PUT },
