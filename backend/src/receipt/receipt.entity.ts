@@ -48,5 +48,5 @@ export class ReceiptEntity {
 
   @ApiProperty({ description: 'User ID that owns this receipt' })
   @Column()
-  userId: ObjectId; // Reference to the owning user
+  userId: string; // Reference to the owning user
 }

@@ -23,6 +23,12 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique tokens
 import * as nodemailer from 'nodemailer'; // For sending emails
 import { google } from 'googleapis';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scryptSync,
+} from 'crypto';
 
 @Injectable()
 export class UserService {
@@ -50,6 +56,39 @@ export class UserService {
     process.env.OAUTH_CLIENT_SECRET, // Client Secret
     'https://developers.google.com/oauthplayground', // Redirect URL
   );
+
+  // Encryption key and algorithm (Store the encryption key securely in environment variables)
+  private readonly algorithm = 'aes-256-ctr';
+  private readonly encryptionKey = scryptSync(
+    process.env.ENCRYPTION_PASSWORD || 'default_secret_password',
+    'salt',
+    32,
+  ); // Generate a 32-byte key using scryptSync
+
+  // Utility method to encrypt the key
+  private encrypt(text: string): string {
+    const iv = randomBytes(16); // Generate a new IV for each encryption
+    const cipher = createCipheriv(this.algorithm, this.encryptionKey, iv);
+    const encryptedText = Buffer.concat([cipher.update(text), cipher.final()]);
+    // Store IV with the encrypted text to use for decryption
+    return `${iv.toString('hex')}:${encryptedText.toString('hex')}`;
+  }
+
+  // Utility method to decrypt the key
+  private decrypt(encryptedText: string): string {
+    const [ivHex, encryptedData] = encryptedText.split(':');
+    const ivBuffer = Buffer.from(ivHex, 'hex');
+    const decipher = createDecipheriv(
+      this.algorithm,
+      this.encryptionKey,
+      ivBuffer,
+    );
+    const decryptedText = Buffer.concat([
+      decipher.update(Buffer.from(encryptedData, 'hex')),
+      decipher.final(),
+    ]);
+    return decryptedText.toString();
+  }
 
   constructor(
     @InjectRepository(UserEntity)
@@ -157,10 +196,18 @@ export class UserService {
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
+    // Encrypt the API keys before saving them
     user.apiToken = {
       ...user.apiToken,
       ...updateApiTokenDto,
     };
+
+    if (updateApiTokenDto.geminiKey) {
+      user.apiToken.geminiKey = this.encrypt(updateApiTokenDto.geminiKey);
+    }
+    if (updateApiTokenDto.openaiKey) {
+      user.apiToken.openaiKey = this.encrypt(updateApiTokenDto.openaiKey);
+    }
     await this.userRepository.save(user);
   }
 
@@ -182,6 +229,21 @@ export class UserService {
 
     // Map to ApiTokenResponseDto
     return plainToInstance(ApiTokenResponseDto, apiTokenData);
+  }
+
+  // Retrieve and decrypt the API key when needed
+  public getDecryptedApiKey(user: UserEntity, model: string): string {
+    const encryptedKey =
+      model === 'GEMINI' ? user.apiToken?.geminiKey : user.apiToken?.openaiKey;
+
+    if (!encryptedKey) {
+      throw new HttpException(
+        `API key for model ${model} is not set`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return this.decrypt(encryptedKey);
   }
 
   // Authenticate user during login

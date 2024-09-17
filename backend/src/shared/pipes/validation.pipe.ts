@@ -4,7 +4,6 @@ import {
   Injectable,
   HttpException,
   HttpStatus,
-  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { validate, ValidationError } from 'class-validator';
@@ -16,10 +15,6 @@ export class ValidationPipe implements PipeTransform<unknown> {
 
   async transform(value: unknown, { metatype }: ArgumentMetadata) {
     this.logger.log('Validating input data');
-
-    // if (!value) {
-    //   throw new BadRequestException('No data submitted');
-    // }
 
     if (!metatype || !this.toValidate(metatype)) {
       return value;
