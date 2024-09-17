@@ -7,6 +7,9 @@ import {
   UpdateUserDto,
   LoginRequestDto,
   UserResponseDto,
+  RequestPasswordResetDto,
+  VerifySecurityQuestionDto,
+  ResetPasswordDto,
 } from './dto';
 import { plainToInstance } from 'class-transformer';
 import * as jwt from 'jsonwebtoken';
@@ -15,10 +18,20 @@ import { ConfigService } from '@nestjs/config';
 import { Binary, ObjectId } from 'mongodb';
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid'; // For generating unique tokens
+import * as nodemailer from 'nodemailer'; // For sending emails
+import { google } from 'googleapis';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
+  private readonly securityQuestions: string[] = [
+    'What was your childhood nickname?',
+    'What is the name of your favorite childhood friend?',
+    'What was the name of your first pet?',
+    'What is your favorite movie?',
+    "What is your neighbour's last name?",
+  ];
 
   private defaultImagePath = path.join(
     __dirname,
@@ -29,11 +42,23 @@ export class UserService {
     'default-profile-image.png',
   );
 
+  // OAuth2 client setup
+  private oauth2Client = new google.auth.OAuth2(
+    process.env.OAUTH_CLIENT_ID, // ClientID
+    process.env.OAUTH_CLIENT_SECRET, // Client Secret
+    'https://developers.google.com/oauthplayground', // Redirect URL
+  );
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // Set OAuth2 credentials
+    this.oauth2Client.setCredentials({
+      refresh_token: process.env.OAUTH_REFRESH_TOKEN,
+    });
+  }
 
   // Create a new user and automatically log them in
   async create(
@@ -166,5 +191,144 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return user;
+  }
+
+  // Get list of security questions
+  getSecurityQuestions(): string[] {
+    return this.securityQuestions;
+  }
+
+  // Fetch security question using the reset token
+  async getSecurityQuestion(token: string): Promise<string> {
+    const user = await this.userRepository.findOneBy({
+      passwordResetToken: token,
+    });
+    if (!user || user.passwordResetTokenExpiry < new Date()) {
+      throw new HttpException(
+        'Invalid or expired token',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Return the user's security question
+    return user.securityQuestion;
+  }
+
+  // Initiate password reset
+  async requestPasswordReset(
+    requestPasswordResetDto: RequestPasswordResetDto,
+  ): Promise<void> {
+    const { email } = requestPasswordResetDto;
+    const user = await this.userRepository.findOneBy({
+      email: email,
+    });
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Generate a reset token and set expiry duration
+    const token = uuidv4();
+    user.passwordResetToken = token;
+    user.passwordResetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    await this.userRepository.save(user);
+
+    // Send email with reset link
+    await this.sendResetEmail(user.email, token);
+  }
+
+  // Send reset email
+  private async sendResetEmail(email: string, token: string): Promise<void> {
+    // Obtain the access token from OAuth2 client (access token is short-lived, thus not defined in .env file)
+    const accessToken = await this.oauth2Client.getAccessToken();
+    // Configure email transport using OAuth2
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+
+    // Send email
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'ExpenseNote - Password Reset Request',
+      text: `Click the link to reset your password: ${resetLink}`,
+    });
+  }
+
+  // Verify security question
+  async verifySecurityQuestion(
+    verifySecurityQuestionDto: VerifySecurityQuestionDto,
+  ): Promise<boolean> {
+    const { token, answer } = verifySecurityQuestionDto;
+    const user = await this.userRepository.findOneBy({
+      passwordResetToken: token,
+    });
+    if (!user || user.passwordResetTokenExpiry < new Date()) {
+      throw new HttpException(
+        'Invalid or expired token',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Verify the answer
+    return await argon2.verify(user.securityAnswer, answer.toLowerCase());
+  }
+
+  // Reset the password
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
+    const { token, newPassword } = resetPasswordDto;
+    const user = await this.userRepository.findOneBy({
+      passwordResetToken: token,
+    });
+    if (!user || user.passwordResetTokenExpiry < new Date()) {
+      throw new HttpException(
+        'Invalid or expired token',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Update the password
+    user.password = newPassword;
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpiry = null;
+
+    await this.userRepository.save(user);
+
+    // Send a confirmation email
+    await this.sendConfirmationEmail(user.email);
+  }
+
+  // Send confirmation email
+  private async sendConfirmationEmail(email: string): Promise<void> {
+    // Obtain the access token from OAuth2 client
+    const accessToken = await this.oauth2Client.getAccessToken();
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'ExpenseNote - Password Changed',
+      text: 'Your password has been successfully changed.',
+    });
   }
 }

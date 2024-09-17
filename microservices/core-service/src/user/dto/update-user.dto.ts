@@ -50,4 +50,18 @@ export class UpdateUserDto {
   })
   @IsOptional()
   image?: Express.Multer.File; // Binary image file
+
+  @ApiProperty({
+    description: 'Security question for password recovery',
+    example: 'What was the name of your first pet?',
+  })
+  @IsOptional()
+  readonly securityQuestion: string;
+
+  @ApiProperty({
+    description: 'Answer to the security question',
+    example: 'Rex',
+  })
+  @IsOptional()
+  readonly securityAnswer: string;
 }

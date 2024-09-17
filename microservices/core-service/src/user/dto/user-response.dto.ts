@@ -23,4 +23,9 @@ export class UserResponseDto {
       'Base64 encoded profile image that can be displayed on the frontend with img tag src attribute',
   })
   image: string;
+  @ApiProperty({
+    description: 'Security question for password recovery',
+    example: 'What was the name of your first pet?',
+  })
+  readonly securityQuestion: string;
 }

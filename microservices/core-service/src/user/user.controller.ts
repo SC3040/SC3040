@@ -11,6 +11,7 @@ import {
   Logger,
   Res,
   Req,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -18,6 +19,9 @@ import {
   UpdateUserDto,
   LoginRequestDto,
   UserResponseDto,
+  RequestPasswordResetDto,
+  VerifySecurityQuestionDto,
+  ResetPasswordDto,
 } from './dto';
 import { ValidationPipe } from '../shared/pipes/validation.pipe';
 import { User } from './user.decorator';
@@ -27,6 +31,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiConsumes,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response, Request } from 'express';
@@ -163,5 +168,108 @@ export class UserController {
       sameSite: 'strict', // Helps mitigate CSRF
       expires: new Date(0), // Set the cookie expiration to the past to delete it
     });
+  }
+
+  @Get('security-questions')
+  @ApiOperation({ summary: 'Get list of security questions' })
+  @ApiResponse({ status: 200, description: 'List of security questions' })
+  @HttpCode(200)
+  getSecurityQuestions(): { questions: string[] } {
+    return { questions: this.userService.getSecurityQuestions() };
+  }
+
+  @Get('get-security-question')
+  @ApiOperation({
+    summary: 'Get user-specific security question for password reset',
+  })
+  @ApiQuery({
+    name: 'token',
+    type: String,
+    description: 'The token sent to the user for password reset',
+    required: true,
+    example: 'c02d1e8a-7861-4f0c-93f3-ff63b40eb6e8',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Security question retrieved successfully',
+    schema: {
+      example: {
+        question: 'What is the name of your favorite childhood friend?',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired token',
+  })
+  @HttpCode(200)
+  async getSecurityQuestion(
+    @Query('token') token: string,
+  ): Promise<{ question: string }> {
+    const securityQuestion = await this.userService.getSecurityQuestion(token);
+    return { question: securityQuestion };
+  }
+
+  @UsePipes(new ValidationPipe())
+  @Post('request-password-reset')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset link sent to email',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @HttpCode(200)
+  async requestPasswordReset(
+    @Body() requestPasswordResetDto: RequestPasswordResetDto,
+  ): Promise<{ message: string }> {
+    await this.userService.requestPasswordReset(requestPasswordResetDto);
+    return { message: 'Password reset link sent to email' };
+  }
+
+  @UsePipes(new ValidationPipe())
+  @Post('verify-security-question')
+  @ApiOperation({ summary: 'Verify security question' })
+  @ApiResponse({
+    status: 200,
+    description: 'Security question verification result',
+    schema: {
+      example: {
+        verified: true,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired token',
+  })
+  @HttpCode(200)
+  async verifySecurityQuestion(
+    @Body() verifySecurityQuestionDto: VerifySecurityQuestionDto,
+  ): Promise<{ verified: boolean }> {
+    const isVerified = await this.userService.verifySecurityQuestion(
+      verifySecurityQuestionDto,
+    );
+
+    return { verified: isVerified };
+  }
+
+  @UsePipes(new ValidationPipe())
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password successfully reset',
+    schema: {
+      example: { message: 'Password successfully reset' },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  @HttpCode(200)
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    await this.userService.resetPassword(resetPasswordDto);
+
+    return { message: 'Password successfully reset' };
   }
 }
