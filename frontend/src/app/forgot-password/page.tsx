@@ -1,35 +1,37 @@
-'use client';
+'use client'
 
 import React, { useState } from 'react';
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null); 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setAlert(null);
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch('http://localhost:8080/api/users/request-password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
+      const data = await response.json(); 
+
       if (response.ok) {
-        toast({ title: "Password reset link sent!", description: data.message });
+        setAlert({ type: 'success', message: data.message || "Password reset link sent!" });
       } else {
-        toast({ title: "Error", description: data.error || "Password reset failed" });
+        setAlert({ type: 'error', message: data.message || "Password reset failed." });
       }
     } catch (error) {
-      toast({ title: "Error", description: "An unexpected error occurred" });
+      setAlert({ type: 'error', message: "An unexpected error occurred. Please try again later." });
     }
     setLoading(false);
   };
@@ -41,6 +43,12 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
         </CardHeader>
         <CardContent>
+          {alert && (
+            <Alert variant={alert.type === 'error' ? 'destructive' : 'default'}>
+              <AlertTitle>{alert.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
+              <AlertDescription>{alert.message}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -52,6 +60,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
