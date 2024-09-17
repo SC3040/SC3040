@@ -89,7 +89,7 @@ export class UserEntity {
       openaiKey: 'encrypted_key',
     },
   })
-  @Column({ nullable: true })
+  @Column({ type: 'json', nullable: true }) // Store as a JSON object
   apiToken?: {
     defaultModel: string;
     geminiKey: string;

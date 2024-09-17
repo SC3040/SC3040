@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ApiTokenResponseDto {
   @ApiProperty({
     description:
-      'Default model (GEMINI or OPENAI). Will be an empty string if not selected.',
+      "Default model (GEMINI or OPENAI). Will be 'UNSET' if not selected.",
     example: 'GEMINI',
-    default: '', // Default value is an empty string
+    default: 'UNSET',
   })
   readonly defaultModel: string;
 

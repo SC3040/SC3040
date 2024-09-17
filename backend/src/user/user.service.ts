@@ -175,7 +175,7 @@ export class UserService {
 
     // Create the response object
     const apiTokenData = {
-      defaultModel: user.apiToken?.defaultModel || '',
+      defaultModel: user.apiToken?.defaultModel || 'UNSET',
       geminiKey: user.apiToken?.geminiKey ? 'SET' : 'UNSET',
       openaiKey: user.apiToken?.openaiKey ? 'SET' : 'UNSET',
     };
