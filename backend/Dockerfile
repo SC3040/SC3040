@@ -1,7 +1,7 @@
 # Stage 1: Dev Stage
 FROM node:22-alpine
 
-WORKDIR /src/core-service
+WORKDIR /src/backend
 
 COPY package*.json ./
 RUN npm install
@@ -17,7 +17,7 @@ CMD ["npm", "run", "start:dev"]
 ## Stage 2: Build Stage
 #FROM node:22-alpine AS build
 #
-#WORKDIR /src/core-service
+#WORKDIR /src/backend
 #
 #COPY package*.json ./
 #RUN npm install
@@ -28,11 +28,11 @@ CMD ["npm", "run", "start:dev"]
 ## Stage 3: Production Stage
 #FROM node:22-alpine AS production
 #
-#WORKDIR /src/core-service
+#WORKDIR /src/backend
 #
-#COPY --from=build /src/core-service/dist ./dist
-#COPY --from=build /src/core-service/node_modules ./node_modules
-#COPY --from=build /src/core-service/package*.json ./
+#COPY --from=build /src/backend/dist ./dist
+#COPY --from=build /src/backend/node_modules ./node_modules
+#COPY --from=build /src/backend/package*.json ./
 #
 #EXPOSE 8080
 #
