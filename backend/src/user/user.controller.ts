@@ -22,6 +22,8 @@ import {
   RequestPasswordResetDto,
   VerifySecurityQuestionDto,
   ResetPasswordDto,
+  UpdateApiTokenDto,
+  ApiTokenResponseDto,
 } from './dto';
 import { ValidationPipe } from '../shared/pipes/validation.pipe';
 import { User } from './user.decorator';
@@ -106,9 +108,41 @@ export class UserController {
     description: 'Current logged in user details retrieved successfully.',
     type: UserResponseDto,
   })
+  @HttpCode(200)
   async getCurrentUser(@User('_id') userId: string): Promise<UserResponseDto> {
     this.logger.log('Extracted user ID from decorator:', userId);
     return await this.userService.findById(userId);
+  }
+
+  @UsePipes(new ValidationPipe())
+  @Put('api-token')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update API tokens for the user' })
+  @ApiResponse({
+    status: 200,
+    description: 'API tokens updated successfully.',
+  })
+  @HttpCode(200)
+  async updateApiToken(
+    @User('_id') userId: string,
+    @Body() updateApiTokenDto: UpdateApiTokenDto,
+  ): Promise<{ message: string }> {
+    this.logger.log('Extracted user ID from decorator:', userId);
+    await this.userService.updateApiToken(userId, updateApiTokenDto);
+    return { message: 'API tokens updated successfully.' };
+  }
+
+  @Get('api-token')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retrieve API tokens for the user' })
+  @ApiResponse({
+    status: 200,
+    description: 'API tokens retrieved successfully.',
+    type: ApiTokenResponseDto,
+  })
+  async getApiToken(@User('_id') userId: string): Promise<ApiTokenResponseDto> {
+    this.logger.log('Extracted user ID from decorator:', userId);
+    return await this.userService.getApiToken(userId);
   }
 
   @UsePipes(new ValidationPipe())
