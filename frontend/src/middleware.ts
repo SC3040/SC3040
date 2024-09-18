@@ -12,9 +12,24 @@ export function middleware(request: NextRequest) {
 
   const path : string = request.nextUrl.pathname
 
-  // api requests
-  if (path.startsWith('/api/')) {
-    return NextResponse.next()
+  // Handle all requests, including API and server action requests
+  if (path.startsWith('/api/') || path.includes('/route/')) {
+    console.log("[Middleware] Handling API or server action request");
+    if (!jwt) {
+      console.log("[Middleware] No JWT found for API or server action request");
+      return new NextResponse(
+        JSON.stringify({ message: 'Not authorized. JWT cookie missing or invalid.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    // If JWT exists, clone the request and add the Authorization header
+    const newHeaders = new Headers(request.headers);
+    newHeaders.set('Authorization', `Bearer ${jwt.value}`);
+    return NextResponse.next({
+      request: {
+        headers: newHeaders,
+      },
+    });
   }
   
   // redirect unauthenticated users to sign in page if they try to access protected pages
