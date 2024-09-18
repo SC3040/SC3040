@@ -12,8 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Check } from "lucide-react"; // Import Check icon
+import { Check } from "lucide-react"; 
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { usePasswordValidation } from "@/hooks/usePasswordValidation";
+import PasswordRequirements from "@/components/shared/PasswordRequirements";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -27,13 +29,7 @@ export default function ResetPasswordPage() {
   const [step, setStep] = useState(1); // To track the step of the reset process
   const [alertMessage, setAlertMessage] = useState(""); // For error/success messages
   const [alertType, setAlertType] = useState<"error" | "success">("success");
-
-  const [passwordValidations, setPasswordValidations] = useState({
-    minLength: false,
-    hasNumber: false,
-    hasAlpha: false,
-    hasSymbol: false,
-  });
+  const { passwordValidations, validatePassword } = usePasswordValidation();
 
   // Step 1: Fetch the security question using the token
   useEffect(() => {
@@ -47,7 +43,7 @@ export default function ResetPasswordPage() {
           const data = await response.json();
           if (response.ok) {
             setSecurityQuestion(data.question);
-            setStep(2); // Move to step 2: answering security question
+            setStep(2);
           } else {
             setAlertMessage(
               data.message || "Failed to load security question."
@@ -64,18 +60,6 @@ export default function ResetPasswordPage() {
       fetchSecurityQuestion();
     }
   }, [token]);
-
-  // Password validation logic
-  const validatePassword = (password: string) => {
-    const validations = {
-      minLength: password.length >= 8,
-      hasNumber: /\d/.test(password),
-      hasAlpha: /[a-zA-Z]/.test(password),
-      hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    };
-    setPasswordValidations(validations);
-    return Object.values(validations).every(Boolean);
-  };
 
   // Handle password input change
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,23 +197,7 @@ export default function ResetPasswordPage() {
                     required
                     disabled={loading}
                   />
-                  <div className="text-sm mt-2">
-                    <p>Password requirements:</p>
-                    <ul className="list-disc ml-4">
-                      <li className={passwordValidations.minLength ? "text-green-600" : "text-red-600"}>
-                        Minimum 8 characters
-                      </li>
-                      <li className={passwordValidations.hasAlpha ? "text-green-600" : "text-red-600"}>
-                        Contains alphabetic characters (a-z, A-Z)
-                      </li>
-                      <li className={passwordValidations.hasNumber ? "text-green-600" : "text-red-600"}>
-                        Contains numbers (0-9)
-                      </li>
-                      <li className={passwordValidations.hasSymbol ? "text-green-600" : "text-red-600"}>
-                        Contains at least 1 symbol (!@#$%^&* etc.)
-                      </li>
-                    </ul>
-                  </div>
+                  <PasswordRequirements validations={passwordValidations} />
                 </div>
               </div>
               <Button type="submit" className="w-full mt-6" disabled={loading}>

@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/AuthProvider'
 import { useFetchSecurityQuestions } from '@/hooks/useFetchSecurityQuestions';
 import Link from 'next/link'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { usePasswordValidation } from "@/hooks/usePasswordValidation";
+import PasswordRequirements from "@/components/shared/PasswordRequirements";
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -27,9 +29,15 @@ export default function SignUpPage() {
     const { signUp, loading } = useAuth();
     const { isLoading, error, securityQuestions } = useFetchSecurityQuestions();
 
+    const { passwordValidations, validatePassword } = usePasswordValidation();
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'password') {
+            validatePassword(value);
+        }
     }
 
     const handleSelectChange = (value: string) => {
@@ -84,6 +92,9 @@ export default function SignUpPage() {
                                         onChange={handleInputChange}
                                         required
                                     />
+                                    {field === 'password' && (
+                                        <PasswordRequirements validations={passwordValidations} />
+                                    )}
                                 </div>
                             ))}
                             <div className="space-y-2">
