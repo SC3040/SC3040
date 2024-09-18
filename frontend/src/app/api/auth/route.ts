@@ -28,11 +28,11 @@ export async function signIn(data: SignInUser) {
 
     if (response.ok) {
       const responseData = await response.json();
-      console.log("[Auth route] received data:", responseData);
+      console.log("[Auth route] signIn: received data:", responseData);
       
       // Check for the Set-Cookie header
       const setCookieHeader = response.headers.get('Set-Cookie');
-      console.log("[Auth route] Set-Cookie header:", setCookieHeader);
+      console.log("[Auth route] signIn: Set-Cookie header:", setCookieHeader);
 
       if (setCookieHeader) {
         // Parse the Set-Cookie header
@@ -50,7 +50,7 @@ export async function signIn(data: SignInUser) {
       }
 
       console.log("[Auth route] Cookies after login:", cookies().getAll());
-
+      await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true, user: {
         id: responseData._id,
         username: responseData.username,
@@ -72,6 +72,9 @@ export async function signIn(data: SignInUser) {
 export async function signUp(data: SignUpUser) {
 
   try {
+
+    console.log("[Auth route] signUp req data:", data);
+
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,13 +83,24 @@ export async function signUp(data: SignUpUser) {
 
     if (response.ok) {
       const data = await response.json();
-      // Set the JWT token in an HTTP-only cookie
-      cookies().set('jwt', data.jwt, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
-      });
+      // Check for the Set-Cookie header
+      const setCookieHeader = response.headers.get('Set-Cookie');
+      console.log("[Auth route] Set-Cookie header:", setCookieHeader);
+
+      if (setCookieHeader) {
+        // Parse the Set-Cookie header
+        const cookieParts = setCookieHeader.split(';');
+        const jwtCookie = cookieParts[0].split('=');
+        if (jwtCookie[0] === 'jwt') {
+          // Manually set the cookie
+          cookies().set('jwt', jwtCookie[1], {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+          });
+        }
+      }
       await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true, user: {
         id: data._id,

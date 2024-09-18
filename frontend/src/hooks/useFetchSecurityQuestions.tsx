@@ -19,9 +19,6 @@ export function useFetchSecurityQuestions() {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/security-questions`)
                 const data = await response.json()
 
-                console.log("received questions:");
-                console.log(data);
-                
                 setSecurityQuestions(data.questions);
 
             } catch(error) {
