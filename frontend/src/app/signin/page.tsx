@@ -14,27 +14,20 @@ export default function SignInPage() {
     const router = useRouter();
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const [signInError, setSignInError] = useState<boolean>(false);
     const { toast } = useToast()
     const { signIn, loading } = useAuth();
 
     const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+        setSignInError(false);
         e.preventDefault()
         try {
             await signIn({username, password})
             toast({ title: "Sign in success!" })
             router.push('/home')
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                toast({
-                    title: "Sign in failed!",
-                    description: error.message,
-                })
-            } else {
-                toast({
-                    title: "Sign in failed!",
-                    description: "An unexpected error occurred",
-                })
-            }
+        } catch (error) {
+            console.log(`[SignInPage] sign in error: ${error}`)
+            setSignInError(true);
         }
     }
 
@@ -48,6 +41,11 @@ export default function SignInPage() {
                 <CardContent>
                     <form onSubmit={handleSignIn}>
                         <div className="space-y-4">
+                            {signInError && (
+                                <div className="text-sm text-red-500 text-center p-2 bg-red-100 rounded">
+                                    Invalid Username / Password !
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="username">Username</Label>
                                 <Input
