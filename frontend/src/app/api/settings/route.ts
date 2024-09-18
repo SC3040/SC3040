@@ -4,8 +4,8 @@ import { cookies } from 'next/headers';
 
 type ApiTokenResponse = {
   defaultModel: string;
-  geminiKey: string;
-  openaiKey: string;
+  geminiKey?: string;
+  openaiKey?: string;
 };
 
 export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
@@ -17,12 +17,10 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
   }
 
   try {
-    // Prepare headers
     const headers = {
       'Cookie': `jwt=${token}`,
     };
 
-    // Log request details
     console.log('[fetchUserApiTokenStatus] Request details:');
     console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
     console.log('Method: GET');
@@ -31,12 +29,8 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
       method: 'GET',
       headers: headers,
-      credentials: 'include', // Ensures cookies are sent with the request
+      credentials: 'include',
     });
-
-    console.log('[fetchUserApiTokenStatus] Response details:');
-    console.log('Status:', response.status);
-    console.log('StatusText:', response.statusText);
 
     if (!response.ok) {
       throw new Error(`Error fetching API token status: ${response.statusText}`);
@@ -52,8 +46,6 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
   }
 }
 
-
-
 export async function updateUserApiTokens({
   defaultModel,
   geminiKey,
@@ -67,13 +59,11 @@ export async function updateUserApiTokens({
   }
 
   try {
-    // Prepare headers
     const headers = {
       'Cookie': `jwt=${token}`,
       'Content-Type': 'application/json',
     };
 
-    // Log request details
     console.log('[updateUserApiTokens] Request details:');
     console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
     console.log('Method: PUT');
@@ -90,10 +80,6 @@ export async function updateUserApiTokens({
       }),
       credentials: 'include',
     });
-
-    console.log('[updateUserApiTokens] Response details:');
-    console.log('Status:', response.status);
-    console.log('StatusText:', response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();

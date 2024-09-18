@@ -10,32 +10,39 @@ export function useApiTokens() {
     openaiKey: string;
   } | null>(null);
 
-  useEffect(() => {
-    async function loadTokenStatus() {
-      try {
-        const data = await fetchUserApiTokenStatus();
-        setTokenStatus(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch token status');
-      } finally {
-        setLoading(false);
-      }
+  const fetchTokenStatus = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchUserApiTokenStatus();
+      // Ensure geminiKey and openaiKey are always strings, use "" as default if undefined
+      setTokenStatus({
+        defaultModel: data.defaultModel,
+        geminiKey: data.geminiKey || "",
+        openaiKey: data.openaiKey || "",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch token status');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    loadTokenStatus();
+  useEffect(() => {
+    fetchTokenStatus();
   }, []);
 
   const updateTokens = async (formData: {
     defaultModel: string;
-    geminiKey: string;
-    openaiKey: string;
+    geminiKey?: string;
+    openaiKey?: string;
   }) => {
     setLoading(true);
     setError(null);
-
     try {
       await updateUserApiTokens(formData);
-      setTokenStatus(formData); // Update the local state after successful submission
+      // Re-fetch token status after updating tokens
+      await fetchTokenStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update tokens');
     } finally {
@@ -43,5 +50,5 @@ export function useApiTokens() {
     }
   };
 
-  return { loading, error, tokenStatus, updateTokens };
+  return { loading, error, tokenStatus, updateTokens, fetchTokenStatus };
 }
