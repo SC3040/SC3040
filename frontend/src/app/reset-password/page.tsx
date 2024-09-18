@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Check } from "lucide-react"; // Import Check icon
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token");
 
   const [securityQuestion, setSecurityQuestion] = useState("");
@@ -37,7 +39,7 @@ export default function ResetPasswordPage() {
           );
           const data = await response.json();
           if (response.ok) {
-            setSecurityQuestion(data.question); // Assuming backend returns question in `data.question`
+            setSecurityQuestion(data.question);
             setStep(2); // Move to step 2: answering security question
           } else {
             setAlertMessage(
@@ -72,6 +74,7 @@ export default function ResetPasswordPage() {
 
       const data = await response.json();
       if (response.ok && data.verified) {
+        setAlertMessage("");
         setStep(3); // Move to step 3: reset password
       } else {
         setAlertMessage(
@@ -101,9 +104,13 @@ export default function ResetPasswordPage() {
       );
       const data = await response.json();
       if (response.ok) {
-        setAlertMessage(data.message || "Password successfully reset.");
-        setAlertType("success");
+        setAlertMessage("");
         setStep(4); // Password reset is complete
+
+        // Redirect to sign-in page after 3 seconds
+        setTimeout(() => {
+          router.push("/signin");
+        }, 3000);
       } else {
         setAlertMessage(data.message || "Password reset failed.");
         setAlertType("error");
@@ -125,12 +132,17 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent>
           {alertMessage && (
-            <Alert variant={alertType === "error" ? "destructive" : "default"}>
-              <AlertTitle>
-                {alertType === "error" ? "Error" : "Success"}
-              </AlertTitle>
-              <AlertDescription>{alertMessage}</AlertDescription>
-            </Alert>
+            <div
+              className={`p-4 mb-4 rounded-lg ${
+                alertType === "error"
+                  ? "border border-red-500 bg-red-100 text-red-800"
+                  : "border border-green-500 bg-green-100 text-green-800"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <AlertDescription>{alertMessage}</AlertDescription>
+              </div>
+            </div>
           )}
 
           {step === 2 && (
@@ -175,6 +187,27 @@ export default function ResetPasswordPage() {
                 {loading ? "Resetting..." : "Reset Password"}
               </Button>
             </form>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4 text-center">
+              <div className="flex justify-center items-center space-x-2">
+                <Check className="text-green-600" size={24} />
+                <p className="text-sm text-muted-foreground">
+                  Password successfully reset.
+                </p>
+              </div>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Redirecting to sign-in page in 3 seconds...
+              </p>
+              <Button
+                className="w-full mt-6"
+                onClick={() => router.push("/signin")}
+              >
+                Sign In Now
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

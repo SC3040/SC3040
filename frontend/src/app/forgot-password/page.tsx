@@ -43,11 +43,18 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
         </CardHeader>
         <CardContent>
-          {alert && (
-            <Alert variant={alert.type === 'error' ? 'destructive' : 'default'}>
-              <AlertTitle>{alert.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
-              <AlertDescription>{alert.message}</AlertDescription>
-            </Alert>
+        {alert && (
+            <div
+              className={`p-4 mb-4 rounded-lg ${
+                alert.type === "error"
+                  ? "border border-red-500 bg-red-100 text-red-800"
+                  : "border border-green-500 bg-green-100 text-green-800"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <AlertDescription>{alert.message}</AlertDescription>
+              </div>
+            </div>
           )}
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
