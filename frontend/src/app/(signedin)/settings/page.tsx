@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +8,14 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useState, useRef, useEffect } from "react";
+import { useApiTokens } from "@/hooks/useApiTokens";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2Icon } from "lucide-react";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 const SettingsPage = () => {
+  const { loading, error, tokenStatus, updateTokens, fetchTokenStatus } =
+    useApiTokens();
   const [formData, setFormData] = useState({
     geminiAPIKey: "",
     openaiAPIKey: "",
@@ -20,16 +26,43 @@ const SettingsPage = () => {
   const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(
     undefined
   );
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (buttonRef.current) {
       setDropdownWidth(buttonRef.current.offsetWidth);
     }
-  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+    if (tokenStatus) {
+      setFormData((prevData) => ({
+        ...prevData,
+        primaryAIProvider: tokenStatus.defaultModel,
+      }));
+    }
+  }, [tokenStatus]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("submitted data: ", formData);
+
+    const payload: {
+      defaultModel: string;
+      geminiKey?: string;
+      openaiKey?: string;
+    } = {
+      defaultModel: formData.primaryAIProvider,
+    };
+
+    // Only include keys if they are provided by the user (non-empty)
+    if (formData.geminiAPIKey) payload.geminiKey = formData.geminiAPIKey;
+    if (formData.openaiAPIKey) payload.openaiKey = formData.openaiAPIKey;
+
+    try {
+      await updateTokens(payload);
+      setSuccessMessage("Settings updated successfully!");
+      await fetchTokenStatus();
+    } catch {
+      setSuccessMessage(null);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +79,8 @@ const SettingsPage = () => {
       primaryAIProvider: provider,
     }));
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="flex items-start justify-center min-h-screen bg-gray-100">
@@ -119,6 +154,9 @@ const SettingsPage = () => {
             className="mt-1 block w-full p-4 border border-gray-300 rounded"
             placeholder="Enter your new Gemini API Key"
           />
+          <p className="text-sm text-gray-500 mt-1">
+            Status: {tokenStatus?.geminiKey === "SET" ? "SET" : "UNSET"}
+          </p>
         </div>
 
         <div className="mb-4">
@@ -136,14 +174,32 @@ const SettingsPage = () => {
             className="mt-1 block w-full p-4 border border-gray-300 rounded"
             placeholder="Enter your new OpenAI API Key"
           />
+          <p className="text-sm text-gray-500 mt-1">
+            Status: {tokenStatus?.openaiKey === "SET" ? "SET" : "UNSET"}
+          </p>
         </div>
+
+        {successMessage && (
+          <div className="p-4 mb-4 rounded-lg border border-green-500 bg-green-50 text-green-700 flex items-center space-x-2">
+            <CheckCircle2Icon className="h-5 w-5 text-green-600" />
+            <AlertDescription>{successMessage}</AlertDescription>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 mb-4 rounded-lg border border-red-500 bg-red-50 text-red-700 flex items-center space-x-2">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+            <AlertDescription>{error}</AlertDescription>
+          </div>
+        )}
 
         <div className="mt-8">
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-4 rounded hover:bg-blue-600 transition"
+            disabled={loading}
           >
-            Submit
+            {loading ? "Saving..." : "Submit"}
           </button>
         </div>
       </form>
