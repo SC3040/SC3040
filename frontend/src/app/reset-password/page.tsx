@@ -28,6 +28,13 @@ export default function ResetPasswordPage() {
   const [alertMessage, setAlertMessage] = useState(""); // For error/success messages
   const [alertType, setAlertType] = useState<"error" | "success">("success");
 
+  const [passwordValidations, setPasswordValidations] = useState({
+    minLength: false,
+    hasNumber: false,
+    hasAlpha: false,
+    hasSymbol: false,
+  });
+
   // Step 1: Fetch the security question using the token
   useEffect(() => {
     if (token) {
@@ -57,6 +64,25 @@ export default function ResetPasswordPage() {
       fetchSecurityQuestion();
     }
   }, [token]);
+
+  // Password validation logic
+  const validatePassword = (password: string) => {
+    const validations = {
+      minLength: password.length >= 8,
+      hasNumber: /\d/.test(password),
+      hasAlpha: /[a-zA-Z]/.test(password),
+      hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+    setPasswordValidations(validations);
+    return Object.values(validations).every(Boolean);
+  };
+
+  // Handle password input change
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPasswordValue = e.target.value;
+    setNewPassword(newPasswordValue);
+    validatePassword(newPasswordValue);
+  };
 
   // Step 2: Verify security question answer
   const handleVerifyAnswer = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -92,6 +118,12 @@ export default function ResetPasswordPage() {
   // Step 3: Handle resetting the password
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validatePassword(newPassword)) {
+      setAlertMessage("Password does not meet complexity requirements.");
+      setAlertType("error");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -177,10 +209,27 @@ export default function ResetPasswordPage() {
                     name="newPassword"
                     type="password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     required
                     disabled={loading}
                   />
+                  <div className="text-sm mt-2">
+                    <p>Password requirements:</p>
+                    <ul className="list-disc ml-4">
+                      <li className={passwordValidations.minLength ? "text-green-600" : "text-red-600"}>
+                        Minimum 8 characters
+                      </li>
+                      <li className={passwordValidations.hasAlpha ? "text-green-600" : "text-red-600"}>
+                        Contains alphabetic characters (a-z, A-Z)
+                      </li>
+                      <li className={passwordValidations.hasNumber ? "text-green-600" : "text-red-600"}>
+                        Contains numbers (0-9)
+                      </li>
+                      <li className={passwordValidations.hasSymbol ? "text-green-600" : "text-red-600"}>
+                        Contains at least 1 symbol (!@#$%^&* etc.)
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
               <Button type="submit" className="w-full mt-6" disabled={loading}>
