@@ -2,6 +2,8 @@ export const PUBLIC_PATHS : string[] = [
     '/',
     '/signin',
     '/signup',
+    '/forgot-password',
+    '/reset-password',
 ]
 
 export const heroHeading = "Capture Costs, Cultivate Wealth\n" +
