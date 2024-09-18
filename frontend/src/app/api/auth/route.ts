@@ -17,6 +17,7 @@ type SignUpUser = {
 
 
 
+
 export async function signIn(data: SignInUser) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/login`, {
@@ -26,23 +27,37 @@ export async function signIn(data: SignInUser) {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      console.log("received data:", data)
-      // Set the JWT token in an HTTP-only cookie
-      cookies().set('jwt', data.token, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
-      });
+      const responseData = await response.json();
+      console.log("[Auth route] signIn: received data:", responseData);
+      
+      // Check for the Set-Cookie header
+      const setCookieHeader = response.headers.get('Set-Cookie');
+      console.log("[Auth route] signIn: Set-Cookie header:", setCookieHeader);
+
+      if (setCookieHeader) {
+        // Parse the Set-Cookie header
+        const cookieParts = setCookieHeader.split(';');
+        const jwtCookie = cookieParts[0].split('=');
+        if (jwtCookie[0] === 'jwt') {
+          // Manually set the cookie
+          cookies().set('jwt', jwtCookie[1], {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+          });
+        }
+      }
+
+      console.log("[Auth route] Cookies after login:", cookies().getAll());
       await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true, user: {
-        id: data._id,
-        username: data.username,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        image: data.image
+        id: responseData._id,
+        username: responseData.username,
+        email: responseData.email,
+        firstName: responseData.firstName,
+        lastName: responseData.lastName,
+        image: responseData.image
       } };
     } else {
       const errorData = await response.json();
@@ -56,8 +71,10 @@ export async function signIn(data: SignInUser) {
 
 export async function signUp(data: SignUpUser) {
 
-  
   try {
+
+    console.log("[Auth route] signUp req data:", data);
+
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -66,13 +83,24 @@ export async function signUp(data: SignUpUser) {
 
     if (response.ok) {
       const data = await response.json();
-      // Set the JWT token in an HTTP-only cookie
-      cookies().set('jwt', data.token, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
-      });
+      // Check for the Set-Cookie header
+      const setCookieHeader = response.headers.get('Set-Cookie');
+      console.log("[Auth route] Set-Cookie header:", setCookieHeader);
+
+      if (setCookieHeader) {
+        // Parse the Set-Cookie header
+        const cookieParts = setCookieHeader.split(';');
+        const jwtCookie = cookieParts[0].split('=');
+        if (jwtCookie[0] === 'jwt') {
+          // Manually set the cookie
+          cookies().set('jwt', jwtCookie[1], {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+          });
+        }
+      }
       await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true, user: {
         id: data._id,
@@ -93,19 +121,29 @@ export async function signUp(data: SignUpUser) {
 }
 
 export async function signOut() {
-  'use server'
-  
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/logout`, {
+    const jwt = cookies().get('jwt');
+    console.log(`[Auth route] JWT before logout:`, jwt);
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/users/logout`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwt?.value}`,
+        'Content-Type': 'application/json'
+      },
     });
 
+    console.log(`[Auth route] Logout response:`, response.status, response.statusText);
+    
+    // Manually delete the JWT cookie
+    cookies().delete('jwt');
+
     if (response.ok) {
-      // Clear the JWT token cookie
-      cookies().delete('jwt');
+      console.log(`[Auth route] Cookies after logout:`, cookies().getAll());
       return { success: true };
     } else {
       const errorData = await response.json();
+      console.error('Logout failed:', errorData);
       return { success: false, error: errorData.message || 'Sign out failed' };
     }
   } catch (error) {
