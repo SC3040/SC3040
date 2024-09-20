@@ -48,13 +48,6 @@ export async function uploadReceiptServerAction(formData: FormData): Promise<Rec
             'Cookie': `jwt=${token}`,
         };
 
-        // Log request details
-        console.log('[uploadReceiptServerAction] Request details:');
-        console.log('URL:', `${process.env.BACKEND_URL}/api/receipts/process`);
-        console.log('Method: POST');
-        console.log('Headers:', JSON.stringify(headers, null, 2));
-        console.log('FormData contents:', logFormData(formData));
-
         const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/process`, {
             method: 'POST',
             headers: headers,
@@ -62,6 +55,13 @@ export async function uploadReceiptServerAction(formData: FormData): Promise<Rec
             credentials: 'include',
         });
 
+        // Log request details
+        console.log('[uploadReceiptServerAction] Request details:');
+        console.log('URL:', `${process.env.BACKEND_URL}/api/receipts/process`);
+        console.log('Method: POST');
+        console.log('Headers:', JSON.stringify(headers, null, 2));
+        console.log('FormData contents:', logFormData(formData));
+        
         // Log response details
         console.log('[uploadReceiptServerAction] Response details:');
         console.log('Status:', response.status);

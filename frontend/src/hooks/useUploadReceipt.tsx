@@ -10,10 +10,10 @@ export function useUploadReceipt() {
     const uploadReceipt = async (file: File) => {
         setIsUploading(true);
         setError(null);
-
+    
         const formData = new FormData();
-        formData.append('file', file);
-
+        formData.append('file', file, file.name);
+    
         try {
             const data = await uploadReceiptServerAction(formData);
             return data;
