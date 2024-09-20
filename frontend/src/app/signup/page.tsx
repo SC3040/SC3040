@@ -92,7 +92,7 @@ export default function SignUpPage() {
                                         onChange={handleInputChange}
                                         required
                                     />
-                                    {field === 'password' && (
+                                    {field === 'password' && formData['password'].length > 0 && (
                                         <PasswordRequirements validations={passwordValidations} />
                                     )}
                                 </div>
