@@ -12,7 +12,7 @@ export function useUploadReceipt() {
         setError(null);
     
         const formData = new FormData();
-        formData.append('file', file, file.name);
+        formData.append('image', file, file.name);
     
         try {
             const data = await uploadReceiptServerAction(formData);

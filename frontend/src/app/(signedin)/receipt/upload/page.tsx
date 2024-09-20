@@ -4,7 +4,7 @@ import React, { useState, useRef, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload } from 'lucide-react';
+import { Upload, Image as ImageIcon } from 'lucide-react';
 import { useUploadReceipt } from '@/hooks/useUploadReceipt';
 import { useToast } from "@/components/ui/use-toast"
 
@@ -14,13 +14,12 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 type AllowedFileType = typeof ALLOWED_FILE_TYPES[number];
 
 const ReceiptImagePage: React.FC = () => {
-
     const { toast } = useToast()
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState<string>('');
     const [preview, setPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { uploadReceipt, isUploading, error: uploadError } = useUploadReceipt(); // Use the custom hook
+    const { uploadReceipt, isUploading, error: uploadError } = useUploadReceipt();
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0];
@@ -53,7 +52,6 @@ const ReceiptImagePage: React.FC = () => {
         }
         try {
             await uploadReceipt(file);
-            // Reset the form after successful upload
             setFile(null);
             setPreview('');
             if (fileInputRef.current) {
@@ -61,15 +59,15 @@ const ReceiptImagePage: React.FC = () => {
             }
 
             toast({
-                title: "Receipt Uploaded Successfuly!",
-              })
+                title: "Receipt Uploaded Successfully!",
+            })
         } catch (err) {
             console.log("Error in uploading receipt:")
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong!",
                 description: "Try again later...",
-              })
+            })
         }
     };
 
@@ -77,25 +75,26 @@ const ReceiptImagePage: React.FC = () => {
         <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
             <h1 className="text-2xl font-bold mb-4">Upload Receipt Image</h1>
 
-            <div className="mb-4">
-                <Input
-                    type="file"
-                    accept={ALLOWED_FILE_TYPES.join(',')}
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    className="hidden"
-                    id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
+            <Input
+                type="file"
+                accept={ALLOWED_FILE_TYPES.join(',')}
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="hidden"
+                id="file-upload"
+            />
+
+            {!file && (
+                <label htmlFor="file-upload" className="cursor-pointer mb-4 block">
                     <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
                         <div className="text-center">
                             <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-1 text-sm text-gray-600">Click to upload or drag and drop</p>
+                            <p className="mt-1 text-sm text-gray-600">Click to upload image</p>
                             <p className="text-xs text-gray-500">PNG or JPEG up to 5MB</p>
                         </div>
                     </div>
                 </label>
-            </div>
+            )}
 
             {(error || uploadError) && (
                 <Alert variant="destructive" className="mb-4">
@@ -105,7 +104,13 @@ const ReceiptImagePage: React.FC = () => {
 
             {preview && (
                 <div className="mb-4">
-                    <img src={preview} alt="Preview" className="max-w-full h-auto rounded-lg" />
+                    <img src={preview} alt="Preview" className="max-w-full h-auto rounded-lg mb-2 border border-input" />
+                    <label htmlFor="file-upload" className="cursor-pointer block">
+                        <Button variant="outline" className="w-full">
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            Change Image
+                        </Button>
+                    </label>
                 </div>
             )}
 
