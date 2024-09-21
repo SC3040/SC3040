@@ -140,8 +140,8 @@ const SettingsPage = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent style={{ width: dropdownWidth ? `${dropdownWidth}px` : "auto" }}>
-                  <DropdownMenuItem onSelect={() => handleProviderChange("OpenAI")}>OpenAI</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleProviderChange("Google Gemini")}>Google Gemini</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleProviderChange("OPENAI")}>OpenAI</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleProviderChange("GEMINI")}>Google Gemini</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
