@@ -5,18 +5,17 @@ import { cookies } from 'next/headers'
 type ReceiptItem = {
     itemName: string;
     itemQuantity: number;
-    itemCost: number;
+    itemCost: string;
 }
 
 export type ReceiptResponse = {
     merchantName: string;
     date: string;
-    totalCost: number;
+    totalCost: string;
     category: string;
     itemizedList: ReceiptItem[];
     image: string;
 }
-
 
 // Helper function to safely log FormData contents
 function logFormData(formData: FormData) {
@@ -29,6 +28,116 @@ function logFormData(formData: FormData) {
     }).join(', ');
 }
 
+export async function getAllReceiptsServerAction(): Promise<ReceiptResponse[]> {
+    const token = cookies().get('jwt')?.value;
+
+    if (!token) {
+        console.error('[getAllReceiptsServerAction] No JWT token found in cookies');
+        throw new Error('Not authorized. JWT cookie missing or invalid.');
+    }
+
+    try {
+        console.log(`[getAllReceiptsServerAction] POST to ${process.env.BACKEND_URL}/api/receipts`);
+        
+        // Log the token (be careful with this in production)
+        console.log('[getAllReceiptsServerAction] JWT Token:', token);
+
+        // Prepare headers
+        const headers = {
+            'Content-Type': 'application/json',
+            'Cookie': `jwt=${token}`,
+        };
+
+        const response = await fetch(`${process.env.BACKEND_URL}/api/receipts`, {
+            method: 'GET',
+            headers: headers,
+            credentials: 'include',
+        });
+
+        // Log request details
+        console.log('[getAllReceiptsServerAction] Request details:');
+        console.log('URL:', `${process.env.BACKEND_URL}/api/receipts/create`);
+        console.log('Method: POST');
+        console.log('Headers:', JSON.stringify(headers, null, 2));
+        
+        // Log response details
+        console.log('[getAllReceiptsServerAction] Response details:');
+        console.log('Status:', response.status);
+        console.log('StatusText:', response.statusText);
+        console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers), null, 2));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[getAllReceiptsServerAction] Error response body: ${errorText}`);
+            throw new Error(`Failed to confirm receipt: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log("[getAllReceiptsServerAction] Received result:", JSON.stringify(result, null, 2));
+
+        return result
+    } catch (err) {
+        console.error('[getAllReceiptsServerAction] error:', err);
+        throw err;
+    }
+}
+
+export async function confirmReceiptServerAction(confirmedData: ReceiptResponse): Promise<boolean> {
+    const token = cookies().get('jwt')?.value;
+
+    if (!token) {
+        console.error('[confirmReceiptServerAction] No JWT token found in cookies');
+        throw new Error('Not authorized. JWT cookie missing or invalid.');
+    }
+
+    try {
+        console.log(`[confirmReceiptServerAction] POST to ${process.env.BACKEND_URL}/api/receipts/create`);
+        
+        // Log the token (be careful with this in production)
+        console.log('[confirmReceiptServerAction] JWT Token:', token);
+
+        // Prepare headers
+        const headers = {
+            'Content-Type': 'application/json',
+            'Cookie': `jwt=${token}`,
+        };
+
+        const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/create`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(confirmedData),
+            credentials: 'include',
+        });
+
+        // Log request details
+        console.log('[confirmReceiptServerAction] Request details:');
+        console.log('URL:', `${process.env.BACKEND_URL}/api/receipts/create`);
+        console.log('Method: POST');
+        console.log('Headers:', JSON.stringify(headers, null, 2));
+        console.log('Body:', JSON.stringify(confirmedData, null, 2));
+        
+        // Log response details
+        console.log('[confirmReceiptServerAction] Response details:');
+        console.log('Status:', response.status);
+        console.log('StatusText:', response.statusText);
+        console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers), null, 2));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[confirmReceiptServerAction] Error response body: ${errorText}`);
+            throw new Error(`Failed to confirm receipt: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log("[confirmReceiptServerAction] Received result:", JSON.stringify(result, null, 2));
+
+        return true
+    } catch (err) {
+        console.error('[confirmReceiptServerAction] error:', err);
+        throw err;
+    }
+}
+
 export async function uploadReceiptServerAction(formData: FormData): Promise<ReceiptResponse> {
     const token = cookies().get('jwt')?.value;
 
@@ -38,7 +147,7 @@ export async function uploadReceiptServerAction(formData: FormData): Promise<Rec
     }
 
     try {
-        console.log(`[uploadReceiptServerAction] POST to ${process.env.BACKEND_URL}`);
+        console.log(`[uploadReceiptServerAction] POST to ${process.env.BACKEND_URL}/api/receipts/process`);
         
         // Log the token (be careful with this in production)
         console.log('[uploadReceiptServerAction] JWT Token:', token);
@@ -79,7 +188,7 @@ export async function uploadReceiptServerAction(formData: FormData): Promise<Rec
 
         return data;
     } catch (err) {
-        console.error('Error uploading receipt:', err);
+        console.error('[uploadReceiptServerAction] error:', err);
         throw err;
     }
 }

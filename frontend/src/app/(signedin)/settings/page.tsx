@@ -58,7 +58,6 @@ const SettingsPage = () => {
   }, [successMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    alert("pressed submit")
     e.preventDefault();
 
     const payload: {
