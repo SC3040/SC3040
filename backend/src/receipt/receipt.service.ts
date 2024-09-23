@@ -1,15 +1,14 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ReceiptEntity } from './receipt.entity';
+import { Receipt, ReceiptDocument } from './schemas/receipt.schema';
 import { CreateReceiptDto, UpdateReceiptDto, ReceiptResponseDto } from './dto';
-import { plainToInstance } from 'class-transformer';
 import * as path from 'path';
 import * as FormData from 'form-data';
-import { Binary, ObjectId } from 'mongodb';
 import axios from 'axios';
 import * as fs from 'node:fs';
 import { UserService } from '../user/user.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { parse } from 'date-fns';
 
 @Injectable()
 export class ReceiptService {
@@ -26,8 +25,8 @@ export class ReceiptService {
   );
 
   constructor(
-    @InjectRepository(ReceiptEntity)
-    private readonly receiptRepository: Repository<ReceiptEntity>,
+    @InjectModel(Receipt.name)
+    private readonly receiptModel: Model<ReceiptDocument>,
     private readonly userService: UserService,
   ) {}
 
@@ -44,21 +43,33 @@ export class ReceiptService {
     const flaskResponse = await this.processReceiptWithFlask(userId, image);
     this.logger.log('Flask Response:', JSON.stringify(flaskResponse));
 
+    // Attempt to parse the date with custom format "DD/MM/YYYY"
+    let receiptDate: string;
+    try {
+      const parsedDate = parse(flaskResponse.date, 'dd/MM/yyyy', new Date());
+      receiptDate = parsedDate.toISOString();
+    } catch {
+      this.logger.error(`Invalid date format received: ${flaskResponse.date}`);
+      receiptDate = ''; // Fallback to empty string or another default value
+    }
+
     // Map Flask response fields to internal naming convention
-    return plainToInstance(ReceiptResponseDto, {
+    return {
+      id: '',
       merchantName: flaskResponse.merchant_name,
-      date: flaskResponse.date,
-      totalCost: flaskResponse.total_cost,
+      date: receiptDate,
+      totalCost: parseInt(flaskResponse.total_cost),
       category: flaskResponse.category,
       itemizedList: flaskResponse.itemized_list
         ? flaskResponse.itemized_list.map((item) => ({
             itemName: item.item_name,
-            itemQuantity: item.item_quantity,
-            itemCost: item.item_cost,
+            itemQuantity: parseInt(item.item_quantity),
+            itemCost: parseInt(item.item_cost),
           }))
         : [], // Fallback to empty array if itemized_list is missing
       image: image.buffer.toString('base64'),
-    });
+      userId: '',
+    };
   }
 
   // Stage 2: Create a new receipt for the user
@@ -66,36 +77,45 @@ export class ReceiptService {
     userId: string,
     createReceiptDto: CreateReceiptDto,
   ): Promise<ReceiptResponseDto> {
-    let binaryImage: Binary;
+    let imageBuffer: Buffer;
 
-    if (createReceiptDto.image && createReceiptDto.image.buffer) {
-      binaryImage = new Binary(Buffer.from(createReceiptDto.image.buffer));
-    } else {
-      // Fallback to default image if no valid image is provided
-      const defaultImage = fs.readFileSync(this.defaultImagePath);
-      binaryImage = new Binary(defaultImage);
+    // Parse the date (try both ISO and dd/MM/yyyy formats)
+    let parsedDate: Date | null = null;
+    if (createReceiptDto.date) {
+      parsedDate = this.parseDate(createReceiptDto.date);
+      if (!parsedDate) {
+        this.logger.error(
+          `Invalid date format received: ${createReceiptDto.date}`,
+        );
+        throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+      }
     }
 
-    this.logger.log('original userId:', userId);
+    // If base64 image is provided, convert it to Buffer
+    if (createReceiptDto.image) {
+      // Remove the base64 metadata (data:image/png;base64,)
+      const base64Data = createReceiptDto.image.replace(
+        /^data:image\/\w+;base64,/,
+        '',
+      );
+      // Convert the base64 string to a buffer
+      imageBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      // Fallback to default image if no valid image is provided
+      imageBuffer = fs.readFileSync(this.defaultImagePath);
+    }
 
-    // // Map the DTO to the entity and store it in the database
-    // const receiptEntity = plainToInstance(ReceiptEntity, {
-    //   ...createReceiptDto,
-    //   image: binaryImage,
-    //   userId: userId,
-    // });
+    this.logger.log('Creating receipt for user:', userId);
 
-    // Create a new ReceiptEntity instance
-    const receiptEntity = new ReceiptEntity();
+    // Save receipt with image buffer in the database
+    const receipt = new this.receiptModel({
+      ...createReceiptDto,
+      date: parsedDate,
+      image: imageBuffer,
+      userId,
+    });
 
-    // Manually assign properties
-    Object.assign(receiptEntity, createReceiptDto);
-    receiptEntity.image = binaryImage;
-    receiptEntity.userId = userId; // Assign the userId as a string
-
-    this.logger.log('before saving in db, userId:', receiptEntity.userId);
-    const savedReceipt = await this.receiptRepository.save(receiptEntity);
-    this.logger.log('after saving in db, userId:', savedReceipt.userId);
+    const savedReceipt = await receipt.save();
     return this.buildReceiptResponse(savedReceipt);
   }
 
@@ -105,62 +125,63 @@ export class ReceiptService {
     receiptId: string,
     updateReceiptDto: UpdateReceiptDto,
   ): Promise<ReceiptResponseDto> {
-    const receipt = await this.findReceiptById(receiptId);
+    const receipt = await this.receiptModel.findById(receiptId);
 
-    if (!receipt || receipt.userId.toString() !== userId) {
+    if (!receipt || receipt.userId !== userId) {
       throw new HttpException(
         'Receipt not found or not owned by the user',
         HttpStatus.NOT_FOUND,
       );
     }
 
-    let binaryImage: Binary;
-
-    // Handle image update or keep existing one
     if (updateReceiptDto.image && updateReceiptDto.image.buffer) {
-      binaryImage = new Binary(Buffer.from(updateReceiptDto.image.buffer));
-    } else {
-      binaryImage = receipt.image;
+      receipt.image = Buffer.from(updateReceiptDto.image.buffer);
     }
 
-    // Merge updated DTO into the existing entity
-    Object.assign(receipt, plainToInstance(ReceiptEntity, updateReceiptDto));
-    receipt.image = binaryImage;
+    // Parse the date (try both ISO and dd/MM/yyyy formats)
+    let parsedDate: Date | null = null;
+    if (updateReceiptDto.date) {
+      parsedDate = this.parseDate(updateReceiptDto.date);
+      if (!parsedDate) {
+        this.logger.error(
+          `Invalid date format received: ${updateReceiptDto.date}`,
+        );
+        throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+      }
+    }
 
-    const updatedReceipt = await this.receiptRepository.save(receipt);
+    Object.assign(receipt, updateReceiptDto);
+    if (parsedDate) {
+      receipt.date = parsedDate; // Set the parsed date
+    }
+
+    const updatedReceipt = await receipt.save();
     return this.buildReceiptResponse(updatedReceipt);
   }
 
-  // Delete a receipt (ensure it belongs to the user)
-  async deleteReceipt(userId: string, receiptId: string): Promise<void> {
-    const receipt = await this.findReceiptById(receiptId);
-
-    if (!receipt || receipt.userId.toString() !== userId) {
+  // Delete a receipt
+  async deleteReceipt(
+    userId: string,
+    receiptId: string,
+  ): Promise<{ message: string }> {
+    this.logger.log('Deleting receipt:', receiptId);
+    const receipt = await this.receiptModel.findById(receiptId);
+    if (!receipt || receipt.userId !== userId.toString()) {
       throw new HttpException(
         'Receipt not found or not owned by the user',
         HttpStatus.NOT_FOUND,
       );
     }
 
-    await this.receiptRepository.remove(receipt);
-  }
-
-  // Find receipt by ID
-  async findReceiptById(receiptId: string): Promise<ReceiptEntity> {
-    const receipt = await this.receiptRepository.findOneBy({
-      _id: new ObjectId(receiptId),
-    });
-    if (!receipt) {
-      throw new HttpException('Receipt not found', HttpStatus.NOT_FOUND);
-    }
-    return receipt;
+    await this.receiptModel.deleteOne({ _id: receiptId });
+    return { message: 'Receipt successfully deleted.' };
   }
 
   // Get all receipts for a user
   async getReceiptsByUser(userId: string): Promise<ReceiptResponseDto[]> {
-    const receipts = await this.receiptRepository.find({
-      where: { userId: userId },
-    });
+    this.logger.log('Fetching receipts for user:', userId);
+    const receipts = await this.receiptModel.find({ userId });
+    this.logger.log('Found receipts:', receipts.length);
     return receipts.map((receipt) => this.buildReceiptResponse(receipt));
   }
 
@@ -222,12 +243,31 @@ export class ReceiptService {
     }
   }
 
+  // Utility function to handle both date formats
+  private parseDate(dateString: string): Date | null {
+    // Try to parse the ISO date format first
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate; // Return if it's a valid ISO date
+    }
+
+    // If it's not a valid ISO date, try parsing it as "dd/MM/yyyy"
+    try {
+      return parse(dateString, 'dd/MM/yyyy', new Date());
+    } catch {
+      this.logger.log('Invalid date format received:', dateString);
+      return null; // Return null if neither format is valid
+    }
+  }
+
   // Build receipt response DTO
-  private buildReceiptResponse(receipt: ReceiptEntity): ReceiptResponseDto {
-    // Use class-transformer to convert entity to DTO
-    return plainToInstance(ReceiptResponseDto, {
-      ...receipt,
-      image: Buffer.from(receipt.image.buffer).toString('base64'), // Convert image to base64 string
-    });
+  private buildReceiptResponse(receipt: ReceiptDocument): ReceiptResponseDto {
+    const { _id, image, ...rest } = receipt.toObject({ versionKey: false });
+
+    return {
+      id: _id, // Add the 'id' field with the value of '_id'
+      ...rest, // Spread all other fields except _id and image
+      image: image?.toString('base64'), // Convert image buffer to base64 if exists
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { UserEntity } from '../user/user.entity';
+import { UserEntity } from '../user/schemas/user.schema';
 
 declare module 'express' {
   export interface Request {

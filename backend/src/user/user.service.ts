@@ -1,7 +1,4 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserEntity } from './user.entity';
 import {
   CreateUserDto,
   UpdateUserDto,
@@ -13,11 +10,9 @@ import {
   UpdateApiTokenDto,
   ApiTokenResponseDto,
 } from './dto';
-import { plainToInstance } from 'class-transformer';
 import * as jwt from 'jsonwebtoken';
 import * as argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
-import { Binary, ObjectId } from 'mongodb';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique tokens
@@ -29,6 +24,10 @@ import {
   randomBytes,
   scryptSync,
 } from 'crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from './schemas/user.schema';
+import { Model } from 'mongoose';
+import { UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UserService {
@@ -91,8 +90,7 @@ export class UserService {
   }
 
   constructor(
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly configService: ConfigService,
   ) {
     // Set OAuth2 credentials
@@ -101,16 +99,14 @@ export class UserService {
     });
   }
 
-  // Create a new user and automatically log them in
+  // Create new user
   async create(
     createUserDto: CreateUserDto,
   ): Promise<{ user: UserResponseDto; token: string }> {
     const { username, email, image } = createUserDto;
 
-    // Check if username already exists
-    const existingUsername = await this.userRepository.findOneBy({
-      username: username,
-    });
+    // Check if username exists
+    const existingUsername = await this.userModel.findOne({ username });
     if (existingUsername) {
       throw new HttpException(
         'Username already exists',
@@ -118,33 +114,34 @@ export class UserService {
       );
     }
 
-    // Check if email already exists
-    const existingEmail = await this.userRepository.findOneBy({ email: email });
+    // Check if email exists
+    const existingEmail = await this.userModel.findOne({ email });
     if (existingEmail) {
       throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
     }
 
-    let binaryImage: Binary;
-
-    // Handle image or set default image
+    // Set the image or load default
+    let imageBuffer: Buffer;
     if (image) {
-      binaryImage = new Binary(Buffer.from(image.buffer));
+      imageBuffer = Buffer.from(image.buffer); // Convert uploaded file buffer to MongoDB buffer
     } else {
-      // Load default image and convert it to binary
-      const defaultImage = fs.readFileSync(this.defaultImagePath);
-      binaryImage = new Binary(defaultImage);
+      // If no image is uploaded, set default image
+      imageBuffer = fs.readFileSync(this.defaultImagePath); // Load default image from the file system
     }
 
-    const newUser = plainToInstance(UserEntity, {
+    // Create the new user with the provided data
+    const user = new this.userModel({
       ...createUserDto,
-      image: binaryImage,
+      image: imageBuffer, // Save either uploaded or default image
     });
 
-    const savedUser = await this.userRepository.save(newUser);
-    const token = this.generateJWT(savedUser);
+    // Save the user and generate a JWT token
+    const savedUser = await user.save();
+
+    const token = this.generateJWT(user);
     return {
-      user: this.buildUserResponse(savedUser),
-      token,
+      user: this.buildUserResponse(savedUser), // Return only the user response DTO
+      token, // Return the token for setting the cookie
     };
   }
 
@@ -153,36 +150,43 @@ export class UserService {
     id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const user = await this.findEntityById(id); // Fetch the entity, not DTO
+    const user = await this.userModel.findById(id);
 
-    let binaryImage: Binary;
-
-    // Handle image update or keep existing one
-    if (updateUserDto.image && updateUserDto.image.buffer) {
-      // Convert the uploaded file to MongoDB Binary, extract from image buffer
-      binaryImage = new Binary(Buffer.from(updateUserDto.image.buffer));
-    } else {
-      // Keep the existing image if no new image is provided
-      binaryImage = user.image;
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    // Update user fields and assign the processed binary image
-    Object.assign(user, plainToInstance(UserEntity, updateUserDto));
-    user.image = binaryImage;
+    Object.assign(user, updateUserDto);
 
-    const updatedUser = await this.userRepository.save(user);
-    return this.buildUserResponse(updatedUser);
+    // Handle image update (if not provided, treat it as user removing the image)
+    if (updateUserDto.image) {
+      // Convert uploaded image to buffer
+      user.image = Buffer.from(updateUserDto.image.buffer);
+    }
+
+    // Save updated user
+    await user.save();
+
+    // Return updated user
+    return this.buildUserResponse(user);
   }
 
   // Find user by ID
   async findById(id: string): Promise<UserResponseDto> {
-    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
-    this.logger.log('findById: Created ObjectId from string', objectId);
-    const user = await this.userRepository.findOneBy({ _id: objectId });
+    const user = await this.userModel.findById(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return this.buildUserResponse(user);
+  }
+
+  // Retrieves raw entity by ID, required for authentication middleware
+  async findEntityById(id: string): Promise<UserDocument> {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return user;
   }
 
   // Update API tokens
@@ -190,12 +194,11 @@ export class UserService {
     id: string,
     updateApiTokenDto: UpdateApiTokenDto,
   ): Promise<void> {
-    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
-    this.logger.log('updateApiToken: Created ObjectId from string', objectId);
-    const user = await this.userRepository.findOneBy({ _id: objectId });
+    const user = await this.userModel.findById(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
+
     // Encrypt the API keys before saving them
     user.apiToken = {
       ...user.apiToken,
@@ -208,31 +211,25 @@ export class UserService {
     if (updateApiTokenDto.openaiKey) {
       user.apiToken.openaiKey = this.encrypt(updateApiTokenDto.openaiKey);
     }
-    await this.userRepository.save(user);
+    await user.save();
   }
 
   // Retrieve API tokens
   async getApiToken(id: string): Promise<ApiTokenResponseDto> {
-    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
-    this.logger.log('getApiToken: Created ObjectId from string', objectId);
-    const user = await this.userRepository.findOneBy({ _id: objectId });
+    const user = await this.userModel.findById(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    // Create the response object
-    const apiTokenData = {
+    return {
       defaultModel: user.apiToken?.defaultModel || 'UNSET',
       geminiKey: user.apiToken?.geminiKey ? 'SET' : 'UNSET',
       openaiKey: user.apiToken?.openaiKey ? 'SET' : 'UNSET',
     };
-
-    // Map to ApiTokenResponseDto
-    return plainToInstance(ApiTokenResponseDto, apiTokenData);
   }
 
   // Retrieve and decrypt the API key when needed
-  public getDecryptedApiKey(user: UserEntity, model: string): string {
+  public getDecryptedApiKey(user: UserDocument, model: string): string {
     const encryptedKey =
       model === 'GEMINI' ? user.apiToken?.geminiKey : user.apiToken?.openaiKey;
 
@@ -251,7 +248,7 @@ export class UserService {
     loginRequestDto: LoginRequestDto,
   ): Promise<{ user: UserResponseDto; token: string }> {
     const { username, password } = loginRequestDto;
-    const user = await this.userRepository.findOne({ where: { username } });
+    const user = await this.userModel.findOne({ username });
 
     if (!user || !(await argon2.verify(user.password, password))) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
@@ -265,7 +262,7 @@ export class UserService {
   }
 
   // Generate JWT token
-  generateJWT(user: UserEntity): string {
+  generateJWT(user: UserDocument): string {
     return jwt.sign(
       { id: user._id, username: user.username, email: user.email },
       this.configService.get('JWT_SECRET'),
@@ -273,26 +270,20 @@ export class UserService {
     );
   }
 
-  // Map UserEntity to UserResponseDto, ensuring the image is base64-encoded
-  public buildUserResponse(user: UserEntity): UserResponseDto {
-    const response = plainToInstance(UserResponseDto, user);
+  public buildUserResponse(user: UserDocument): UserResponseDto {
+    // Convert the Mongoose model to a plain object
+    const userObject = user.toObject({ versionKey: false });
 
-    // Convert the binary image data to Base64
-    response.image = Buffer.from(user.image.buffer).toString('base64');
-
-    return response;
-  }
-
-  // Retrieves raw entity by ID, required for authentication middleware
-  async findEntityById(id: string): Promise<UserEntity> {
-    const objectId = new ObjectId(id); // convert string to MongoDB ObjectId
-    this.logger.log('findEntityById: Created ObjectId from string', objectId);
-    const user = await this.userRepository.findOneBy({ _id: objectId });
-    if (!user) {
-      this.logger.log('User not found', id);
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    return user;
+    // Return only the required fields mapped to UserResponseDto
+    return {
+      id: userObject._id,
+      username: userObject.username,
+      email: userObject.email,
+      firstName: userObject.firstName,
+      lastName: userObject.lastName,
+      image: userObject.image ? userObject.image.toString('base64') : '',
+      securityQuestion: userObject.securityQuestion,
+    };
   }
 
   // Get list of security questions
@@ -302,9 +293,7 @@ export class UserService {
 
   // Fetch security question using the reset token
   async getSecurityQuestion(token: string): Promise<string> {
-    const user = await this.userRepository.findOneBy({
-      passwordResetToken: token,
-    });
+    const user = await this.userModel.findOne({ passwordResetToken: token });
     if (!user || user.passwordResetTokenExpiry < new Date()) {
       throw new HttpException(
         'Invalid or expired token',
@@ -321,9 +310,7 @@ export class UserService {
     requestPasswordResetDto: RequestPasswordResetDto,
   ): Promise<void> {
     const { email } = requestPasswordResetDto;
-    const user = await this.userRepository.findOneBy({
-      email: email,
-    });
+    const user = await this.userModel.findOne({ email });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -333,7 +320,7 @@ export class UserService {
     user.passwordResetToken = token;
     user.passwordResetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
 
-    await this.userRepository.save(user);
+    await user.save();
 
     // Send email with reset link
     await this.sendResetEmail(user.email, token);
@@ -371,9 +358,7 @@ export class UserService {
     verifySecurityQuestionDto: VerifySecurityQuestionDto,
   ): Promise<boolean> {
     const { token, answer } = verifySecurityQuestionDto;
-    const user = await this.userRepository.findOneBy({
-      passwordResetToken: token,
-    });
+    const user = await this.userModel.findOne({ passwordResetToken: token });
     if (!user || user.passwordResetTokenExpiry < new Date()) {
       throw new HttpException(
         'Invalid or expired token',
@@ -388,9 +373,7 @@ export class UserService {
   // Reset the password
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
     const { token, newPassword } = resetPasswordDto;
-    const user = await this.userRepository.findOneBy({
-      passwordResetToken: token,
-    });
+    const user = await this.userModel.findOne({ passwordResetToken: token });
     if (!user || user.passwordResetTokenExpiry < new Date()) {
       throw new HttpException(
         'Invalid or expired token',
@@ -399,11 +382,11 @@ export class UserService {
     }
 
     // Update the password
-    user.password = newPassword;
+    user.password = await argon2.hash(newPassword);
     user.passwordResetToken = null;
     user.passwordResetTokenExpiry = null;
 
-    await this.userRepository.save(user);
+    await user.save();
 
     // Send a confirmation email
     await this.sendConfirmationEmail(user.email);

@@ -8,18 +8,27 @@ class ItemDto {
   itemQuantity: number;
 
   @ApiProperty({ description: 'Cost of the item', example: '10.00' })
-  itemCost: string;
+  itemCost: number;
 }
 
 export class ReceiptResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier of the receipt',
+    example: '650c59a88f1e78c88102d1a4',
+  })
+  id: string;
+
   @ApiProperty({ description: 'Merchant name', example: 'KFC' })
   merchantName: string;
 
-  @ApiProperty({ description: 'Date of the receipt', example: '2024-09-01' })
+  @ApiProperty({
+    description: 'Date of the receipt, in String',
+    example: '2024-09-01',
+  })
   date: string;
 
   @ApiProperty({ description: 'Total cost', example: '19.99' })
-  totalCost: string;
+  totalCost: number;
 
   @ApiProperty({ description: 'Category of the receipt', example: 'Food' })
   category: string;
@@ -29,6 +38,9 @@ export class ReceiptResponseDto {
     type: [ItemDto],
   })
   itemizedList: ItemDto[];
+
+  @ApiProperty({ description: 'User ID that owns this receipt' })
+  userId: string;
 
   @ApiProperty({
     description: 'Receipt image in Base64 encoding',
