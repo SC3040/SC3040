@@ -41,12 +41,6 @@ export class Receipt {
   @ApiProperty({ description: 'User ID that owns this receipt' })
   @Prop({ required: true })
   userId: string; // Reference to the owning user
-
-  @ApiProperty({
-    description: 'Receipt image stored as binary data',
-  })
-  @Prop({ type: Buffer })
-  image: Buffer;
 }
 
 // Create and export the schema using SchemaFactory

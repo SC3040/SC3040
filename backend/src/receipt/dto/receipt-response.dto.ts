@@ -41,9 +41,4 @@ export class ReceiptResponseDto {
 
   @ApiProperty({ description: 'User ID that owns this receipt' })
   userId: string;
-
-  @ApiProperty({
-    description: 'Receipt image in Base64 encoding',
-  })
-  image: string;
 }

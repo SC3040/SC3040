@@ -93,10 +93,8 @@ export class ReceiptController {
     @User('_id') userId: string,
     @Param('id') receiptId: string,
     @Body() updateReceiptDto: UpdateReceiptDto,
-    @UploadedFile() image: Express.Multer.File,
   ): Promise<ReceiptResponseDto> {
     this.logger.log('Extracted user ID from decorator:', userId);
-    updateReceiptDto.image = image || null;
     return this.receiptService.updateReceipt(
       userId,
       receiptId,
