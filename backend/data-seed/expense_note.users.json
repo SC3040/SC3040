@@ -15,5 +15,9 @@
   "password": "$argon2id$v=19$m=65536,t=3,p=4$h9gYiQTwC5OMkEhRNsoNvQ$ozbUF9RDuH+QsqsXBrpQqQB7axaEGIS7MpCiQve/Wxo",
   "securityQuestion": "What was the name of your first pet?",
   "securityAnswer": "$argon2id$v=19$m=65536,t=3,p=4$67XfJjeOV37Or4VDf2CZ8A$ZqyY/Y26qdcJiRWGizCbj4CvpCkzgJCfnJIv4i7ysHk",
-  "__v": 0
+  "__v": 0,
+  "apiToken": {
+    "defaultModel": "GEMINI",
+    "geminiKey": "f83979e02eaf37fb4d9dfe91aba9cbfb:283c5f5afdc927d63d473002f117d446b6b1ee2fa8aea2a6d0560053c39b5d0b20d3be37e6a783"
+  }
 }]
