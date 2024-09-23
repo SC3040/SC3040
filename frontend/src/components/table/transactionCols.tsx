@@ -1,5 +1,3 @@
-"use client"
-
 import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,91 +10,109 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { Transaction } from "@/hooks/useFetchTransactions";
+type ReceiptItem = {
+  itemName: string;
+  itemQuantity: number;
+  itemCost: string;
+}
 
+export type ReceiptResponse = {
+  id: string;
+  merchantName: string;
+  date: string;
+  totalCost: string;
+  category: string;
+  itemizedList: ReceiptItem[];
+  image: string;
+}
 
-  export const columns: ColumnDef<Transaction>[] = [
-    {
-      accessorKey: "date",
-      header: ({ column }) => {
-        return (
-            <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-              Date
-              <ArrowUpDown className="ml-2 h-4 w-4" />
+export const columns: ColumnDef<ReceiptResponse>[] = [
+  {
+    accessorKey: "date",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("date"))
+      const formattedDate = date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      })
+      return <div>{formattedDate}</div>
+    }
+  },
+  {
+    accessorKey: "merchantName",
+    header: "Merchant",
+    cell: ({ row }) => {
+      return <div>{row.getValue("merchantName")}</div>
+    }
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => {
+      return <div className="capitalize">{row.getValue("category")}</div>
+    }
+  },
+  {
+    accessorKey: "totalCost",
+    header: () => <div className="text-right">Total Cost</div>,
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("totalCost"))
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount)
+ 
+      return <div className="text-right font-medium">{formatted}</div>
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const receipt = row.original
+ 
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
-        )
-      },
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("date"))
-        const formattedDate = date.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: '2-digit'
-        })
-        return <div>{formattedDate}</div>
-      }
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(receipt.date)}
+            >
+              Copy receipt date
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {}} // TODO: View details feature
+            >
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {}} // TODO: delete feature
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
     },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => {
-        return <div className="capitalize">{row.getValue("type")}</div>
-      }
-    },
-    {
-      accessorKey: "amount",
-      header: () => <div className="text-right">Amount</div>,
-      cell: ({ row }) => {
-        const amount = row.getValue("amount") as number
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(amount)
-   
-        return <div className="text-right font-medium">{formatted}</div>
-      },
-    },
-    {
-      accessorKey: "desc",
-      header: "Desc",
-      meta: {
-        hideOnMobile: true
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const transaction = row.original
-   
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(transaction.date)}
-              >
-                Copy transaction date
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {}} // TODO: delete feature
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
-  ]
+  },
+]

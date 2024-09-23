@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signIn, signUp, signOut } from '@/app/api/auth/route';
 import { useRouter } from 'next/navigation';
 
@@ -50,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
 
   const handleSignIn = async (data: SignInUser) => {
     setLoading(true);

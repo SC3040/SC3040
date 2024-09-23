@@ -3,15 +3,10 @@
 import DataTable from "@/components/table/TransactionTable"
 import { columns } from "@/components/table/transactionCols"
 import { useEffect, useState } from 'react'
-import { useFetchTransactions } from "@/hooks/useFetchTransactions";
 import { useReceipt } from "@/hooks/useReceipt";
 import { ReceiptResponse } from "@/app/api/receipt/route";
 
 export default function TransactionHomePage() {
-
-    // TODO: add userID
-    const userID : string = "HARDCODE"
-    const { isLoading, error, transactions } = useFetchTransactions(userID);
 
     const { getAllReceipts, isGetting} = useReceipt();
     const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([])
@@ -24,8 +19,6 @@ export default function TransactionHomePage() {
                 console.error("Error fetching receipts:", error)
             }
         }
-        console.log("[transactions page] receiptData:")
-        console.log(receiptData);
         fetchReceipts()
     }, []) 
 
@@ -33,6 +26,14 @@ export default function TransactionHomePage() {
     return (
         <div className="flex min-h-screen flex-col items-center justify-start">
             <h1>Transactions</h1>
+
+            <div>
+                {receiptData.map((receipt, i)=>{
+                    return (
+                        <p key={`${receipt.id}`}>{receipt.merchantName}</p>
+                    )
+                })}
+            </div>
 
             {/* <DataTable columns={columns} data={transactions}/> */}
 

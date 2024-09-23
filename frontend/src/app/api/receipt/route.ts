@@ -9,6 +9,7 @@ type ReceiptItem = {
 }
 
 export type ReceiptResponse = {
+    id: string;
     merchantName: string;
     date: string;
     totalCost: string;

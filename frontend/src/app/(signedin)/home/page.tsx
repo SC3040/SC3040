@@ -1,19 +1,31 @@
 "use client"
 
 import { useAuth } from '@/hooks/AuthProvider'
+import { useEffect, useState } from 'react'
 import LineChartC from '@/components/charts/linechart'
 import BarChartC from '@/components/charts/barchart'
 import DataTable from "@/components/table/TransactionTable";
 import { columns } from "@/components/table/transactionCols"
-import { useFetchTransactions } from "@/hooks/useFetchTransactions";
+import { useReceipt } from "@/hooks/useReceipt";
+import { ReceiptResponse } from "@/app/api/receipt/route";
 
 const HomePage = () => {
 
     const { user } = useAuth();
 
-    // TODO: add userID
-    const userID : string = "HARDCODE"
-    const { isLoading, error, transactions } = useFetchTransactions(userID);
+    const { getAllReceipts, isGetting} = useReceipt();
+    const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([])
+    useEffect(() => {
+        const fetchReceipts = async () => {
+            try {
+                const data = await getAllReceipts()
+                setReceiptData(data)
+            } catch (error) {
+                console.error("Error fetching receipts:", error)
+            }
+        }
+        fetchReceipts()
+    }, []) 
 
     return (
         <div className="flex_col_center w-full gap-4">
@@ -24,15 +36,15 @@ const HomePage = () => {
             </div>
 
             <div className="w-full">
-                <LineChartC/>
+                <LineChartC data={receiptData}/>
             </div>
 
             <div className="w-full flex gap-4">
                 <div className="w-1/2">
-                    <BarChartC/>
+                    <BarChartC data={receiptData}/>
                 </div>
                 <div className="w-1/2">
-                    <DataTable columns={columns} data={transactions}/>
+                    <DataTable columns={columns} data={receiptData}/>
                 </div>
             </div>
         </div>
