@@ -24,10 +24,18 @@ class ItemDto {
 
   @ApiProperty({ description: 'Cost of the item', example: '10.00' })
   @IsNotEmpty()
-  itemCost: string;
+  itemCost: number;
 }
 
 export class UpdateReceiptDto {
+  @ApiProperty({
+    description: 'Unique identifier of the receipt',
+    example: '650c59a88f1e78c88102d1a4',
+  })
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
   @ApiProperty({ description: 'Merchant name', example: 'KFC' })
   @IsNotEmpty()
   merchantName: string;
@@ -38,7 +46,7 @@ export class UpdateReceiptDto {
 
   @ApiProperty({ description: 'Total cost', example: '19.99' })
   @IsNotEmpty()
-  totalCost: string;
+  totalCost: number;
 
   @ApiProperty({ description: 'Category of the receipt', example: 'Food' })
   @IsNotEmpty()

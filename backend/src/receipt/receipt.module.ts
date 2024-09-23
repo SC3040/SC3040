@@ -1,15 +1,15 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReceiptService } from './receipt.service';
 import { ReceiptController } from './receipt.controller';
-import { ReceiptEntity } from './receipt.entity';
+import { Receipt, ReceiptSchema } from './schemas/receipt.schema';
 import { AuthMiddleware } from '../user/auth.middleware'; // Reusing the auth middleware from UserModule
 import { UserModule } from '../user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReceiptEntity]),
+    MongooseModule.forFeature([{ name: Receipt.name, schema: ReceiptSchema }]),
     ConfigModule,
     UserModule,
   ],
@@ -22,6 +22,9 @@ export class ReceiptModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .forRoutes({ path: '/receipts/*', method: RequestMethod.ALL }); // Apply middleware to all Receipt routes
+      .forRoutes(
+        { path: '/receipts', method: RequestMethod.ALL },
+        { path: '/receipts/*', method: RequestMethod.ALL },
+      ); // Apply middleware to all Receipt routes
   }
 }

@@ -61,7 +61,7 @@ export class ReceiptController {
   }
 
   // Stage 2: Confirm and create receipt in the database
-  // @UsePipes(new ValidationPipe())
+  @UsePipes(new ValidationPipe())
   @Post('create')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create receipt with the confirmed details' })
@@ -95,6 +95,7 @@ export class ReceiptController {
     @Body() updateReceiptDto: UpdateReceiptDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ReceiptResponseDto> {
+    this.logger.log('Extracted user ID from decorator:', userId);
     updateReceiptDto.image = image || null;
     return this.receiptService.updateReceipt(
       userId,
@@ -106,22 +107,32 @@ export class ReceiptController {
   @Delete(':id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete receipt' })
-  @ApiResponse({ status: 204, description: 'Receipt successfully deleted.' })
-  @HttpCode(204)
+  @ApiResponse({
+    status: 204,
+    description: 'Receipt successfully deleted.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Receipt not found.',
+  })
+  @HttpCode(200)
   async deleteReceipt(
     @User('_id') userId: string,
     @Param('id') receiptId: string,
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
+    this.logger.log('Extracted user ID from decorator:', userId);
     return this.receiptService.deleteReceipt(userId, receiptId);
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all receipts for the user' })
   @ApiResponse({
     status: 200,
     description: 'Receipts retrieved successfully.',
     type: [ReceiptResponseDto],
   })
+  @HttpCode(200)
   async getReceiptsByUser(
     @User('_id') userId: string,
   ): Promise<ReceiptResponseDto[]> {

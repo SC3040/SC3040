@@ -4,11 +4,11 @@ import {
   IsNumber,
   ValidateNested,
   IsOptional,
+  IsString,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from '../receipt.enums';
 import { Type } from 'class-transformer';
-import { Express } from 'express';
 
 class ItemDto {
   @ApiProperty({ description: 'Name of the item', example: 'Item 1' })
@@ -22,7 +22,7 @@ class ItemDto {
 
   @ApiProperty({ description: 'Cost of the item', example: '10.00' })
   @IsNotEmpty()
-  itemCost: string;
+  itemCost: number;
 }
 
 export class CreateReceiptDto {
@@ -36,7 +36,7 @@ export class CreateReceiptDto {
 
   @ApiProperty({ description: 'Total cost', example: '19.99' })
   @IsNotEmpty()
-  totalCost: string;
+  totalCost: number;
 
   @ApiProperty({ description: 'Category of the receipt', example: 'Food' })
   @IsNotEmpty()
@@ -52,11 +52,11 @@ export class CreateReceiptDto {
   itemizedList: ItemDto[];
 
   @ApiProperty({
-    description: 'Receipt image to be uploaded as binary',
-    type: 'string',
-    format: 'binary',
+    description: 'Base64 encoded receipt image string',
+    example: 'data:image/png;base64,iVBORw0KGgo...',
     required: false,
   })
   @IsOptional()
-  image?: Express.Multer.File;
+  @IsString()
+  image?: string; // Expect base64 string
 }
