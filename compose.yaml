@@ -42,6 +42,45 @@ services:
     networks:
       - app-network
 
+  mongodb-seed:
+    image: mongo:latest
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/data-seed:/data
+    command: >
+      bash -c '
+        set -e;
+        echo "Waiting for MongoDB to be ready...";
+        until mongosh --host mongodb --port 27017 -u root -p secret --authenticationDatabase admin --eval "print(\"waited for connection\")"; do
+          sleep 2;
+        done;
+        echo "MongoDB is ready.";
+
+        echo "Dropping existing database and creating a new one...";
+        mongosh --host mongodb --port 27017 -u root -p secret --authenticationDatabase admin --eval "
+          use expense_note;
+          db.dropDatabase();
+        "
+
+        JSON_FILES=(
+          "expense_note.receipts.json"
+          "expense_note.users.json"
+        )
+
+        for file in "$${JSON_FILES[@]}"; do
+          echo "Importing $$file...";
+          collection=$$(echo "$$file" | sed "s/expense_note\\.\(.*\)\.json/\\1/");
+          mongoimport --host mongodb --port 27017 -u root -p secret \
+            --authenticationDatabase admin --db expense_note --collection "$$collection" \
+            --file /data/"$$file" --jsonArray;
+        done;
+
+        echo "Import completed.";
+      '
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -49,7 +88,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - mongodb
+      - mongodb-seed
     volumes:
       - ./backend:/src/backend # Sync the source code to /src/backend
       - /src/backend/node_modules # Prevent node_modules from being overwritten
