@@ -1,10 +1,8 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Receipt, ReceiptDocument } from './schemas/receipt.schema';
 import { CreateReceiptDto, UpdateReceiptDto, ReceiptResponseDto } from './dto';
-import * as path from 'path';
 import * as FormData from 'form-data';
 import axios from 'axios';
-import * as fs from 'node:fs';
 import { UserService } from '../user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -13,16 +11,6 @@ import { parse } from 'date-fns';
 @Injectable()
 export class ReceiptService {
   private readonly logger = new Logger(ReceiptService.name);
-
-  // For manual input of cost, without using image upload
-  private defaultImagePath = path.join(
-    __dirname,
-    '..',
-    '..',
-    'public',
-    'images',
-    'default-receipt-image.png',
-  );
 
   constructor(
     @InjectModel(Receipt.name)
@@ -67,7 +55,6 @@ export class ReceiptService {
             itemCost: parseInt(item.item_cost),
           }))
         : [], // Fallback to empty array if itemized_list is missing
-      image: image.buffer.toString('base64'),
       userId: '',
     };
   }
@@ -77,8 +64,6 @@ export class ReceiptService {
     userId: string,
     createReceiptDto: CreateReceiptDto,
   ): Promise<ReceiptResponseDto> {
-    let imageBuffer: Buffer;
-
     // Parse the date (try both ISO and dd/MM/yyyy formats)
     let parsedDate: Date | null = null;
     if (createReceiptDto.date) {
@@ -91,27 +76,12 @@ export class ReceiptService {
       }
     }
 
-    // If base64 image is provided, convert it to Buffer
-    if (createReceiptDto.image) {
-      // Remove the base64 metadata (data:image/png;base64,)
-      const base64Data = createReceiptDto.image.replace(
-        /^data:image\/\w+;base64,/,
-        '',
-      );
-      // Convert the base64 string to a buffer
-      imageBuffer = Buffer.from(base64Data, 'base64');
-    } else {
-      // Fallback to default image if no valid image is provided
-      imageBuffer = fs.readFileSync(this.defaultImagePath);
-    }
-
     this.logger.log('Creating receipt for user:', userId);
 
     // Save receipt with image buffer in the database
     const receipt = new this.receiptModel({
       ...createReceiptDto,
       date: parsedDate,
-      image: imageBuffer,
       userId,
     });
 
@@ -132,10 +102,6 @@ export class ReceiptService {
         'Receipt not found or not owned by the user',
         HttpStatus.NOT_FOUND,
       );
-    }
-
-    if (updateReceiptDto.image && updateReceiptDto.image.buffer) {
-      receipt.image = Buffer.from(updateReceiptDto.image.buffer);
     }
 
     // Parse the date (try both ISO and dd/MM/yyyy formats)

@@ -1,11 +1,4 @@
-import {
-  IsNotEmpty,
-  IsArray,
-  IsNumber,
-  ValidateNested,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsArray, IsNumber, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from '../receipt.enums';
 import { Type } from 'class-transformer';
@@ -50,13 +43,4 @@ export class CreateReceiptDto {
   @Type(() => ItemDto)
   @IsArray()
   itemizedList: ItemDto[];
-
-  @ApiProperty({
-    description: 'Base64 encoded receipt image string',
-    example: 'data:image/png;base64,iVBORw0KGgo...',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  image?: string; // Expect base64 string
 }

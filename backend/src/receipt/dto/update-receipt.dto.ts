@@ -1,5 +1,4 @@
 import {
-  IsOptional,
   IsArray,
   ValidateNested,
   IsString,
@@ -9,7 +8,6 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from '../receipt.enums';
 import { Type } from 'class-transformer';
-import { Express } from 'express';
 
 class ItemDto {
   @ApiProperty({ description: 'Name of the item', example: 'Item 1' })
@@ -60,13 +58,4 @@ export class UpdateReceiptDto {
   @Type(() => ItemDto)
   @IsArray()
   itemizedList: ItemDto[];
-
-  @ApiProperty({
-    description: 'Receipt image to be uploaded as binary',
-    type: 'string',
-    format: 'binary',
-    required: false,
-  })
-  @IsOptional()
-  image?: Express.Multer.File;
 }
