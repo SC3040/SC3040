@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from gemini import GeminiReceiptParser
-from Receipt import ReceiptEncoder
+from Receipt import ReceiptEncoder, APIKeyError
 from gpt4o import OpenAIReceiptParser
 from flask import Response
 from pdf2image import convert_from_bytes
@@ -54,16 +54,19 @@ def create_app():
                 receipt_obj_list = [PIL.Image.open(file)]
 
             # Initialize the receipt parser based on the model
-            if model == 'GEMINI':
-                # receipt_parser = ReceiptParser(os.environ['GOOGLE_API_KEY'])
-                receipt_parser = GeminiReceiptParser(api_key)
-            elif model == 'OPENAI':
-                receipt_parser = OpenAIReceiptParser(api_key)
-            else:
-                return jsonify({'error': 'Unsupported model parameter received'}), 400
+            try:
+                if model == 'GEMINI':
+                    # receipt_parser = ReceiptParser(os.environ['GOOGLE_API_KEY'])
+                    receipt_parser = GeminiReceiptParser(api_key)
+                elif model == 'OPENAI':
+                    receipt_parser = OpenAIReceiptParser(api_key)
+                else:
+                    return jsonify({'error': 'Unsupported model parameter received'}), 400
 
-            # Parse the receipt
-            response = receipt_parser.parse(receipt_obj_list)
+                # Parse the receipt
+                response = receipt_parser.parse(receipt_obj_list)
+            except APIKeyError:
+                return jsonify({'error': 'Invalid API key'}), 401
 
             if response is None:
                 return jsonify({'error': 'Image is not a receipt or error parsing receipt'}), 400

@@ -14,6 +14,11 @@ class ReceiptError(Exception):
         self.error_msg = error_msg
         super().__init__(f"Input error for field: {self.field_name}. {self.error_msg}")
 
+class APIKeyError(Exception):
+    """Invalid API key"""
+    def __init__(self):
+        super().__init__("Invalid API key")
+
 
 class Category(Enum):
     TRANSPORT = 'Transport'

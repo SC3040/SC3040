@@ -1,12 +1,12 @@
 from openai import OpenAI
-from werkzeug.datastructures import FileStorage
 from pydantic import BaseModel
 from typing import Optional
-from Receipt import Receipt, ReceiptError, Category
+from Receipt import Receipt, ReceiptError, Category, APIKeyError
 import json
 import tiktoken
 import base64
 from io import BytesIO
+from openai import AuthenticationError
 
 # Response schema
 class LineItemSchema(BaseModel):
@@ -31,7 +31,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
 
         # Chat session specific attributes
         self.messages = []
-        self.max_retry = 3
+        self.max_retry = 3+1 # 3 retries, 1 initial attempt
         self.buffer = 2048 # Should be same as max_tokens output
 
         # Generation config
@@ -76,11 +76,15 @@ itemized_list: A list of line items, each containing:
         for attempt_num in range(self.max_retry):
             # Send the request
             # Create API request with local image
-            response = self.client.beta.chat.completions.parse(
-                model=self.model_version,
-                messages=self.messages,
-                **self.generation_config
-            )
+            try:
+                response = self.client.beta.chat.completions.parse(
+                    model=self.model_version,
+                    messages=self.messages,
+                    **self.generation_config
+                )
+            except AuthenticationError:
+                raise APIKeyError()
+
             # Append response to messages
             response_content = response.choices[0].message.content
             self.append_message("assistant", response_content)

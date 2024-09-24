@@ -1,9 +1,12 @@
+from http.client import responses
+
 import google.generativeai as genai
 from werkzeug.datastructures import FileStorage
 import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
-from Receipt import Receipt, ReceiptError, Category
+from Receipt import Receipt, ReceiptError, Category, APIKeyError
+from google.api_core.exceptions import InvalidArgument
 
 # Define the template of the return json obj
 # Method 1
@@ -82,7 +85,11 @@ If the image given is not a receipt, please return Invalid category and ignore a
                 # Init the model
                 self.model = genai.GenerativeModel(model_name=model_version, system_instruction=self.system_instruction,
                                                    generation_config=self.generation_config, safety_settings=self.safety_settings)
-                self.model_info = genai.get_model(model_version)
+                try:
+                    self.model_info = genai.get_model(model_version)
+                except InvalidArgument as e:
+                    if e.code == 400 and "API key not valid" in str(e):
+                        raise APIKeyError()
 
                 # Init chat instance
                 self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
