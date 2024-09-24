@@ -21,10 +21,6 @@ import { MongooseModule } from '@nestjs/mongoose';
       }),
       inject: [ConfigService],
     }),
-
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'), // Serve static content from 'public' directory
-    }),
     UserModule,
     ReceiptModule,
   ],

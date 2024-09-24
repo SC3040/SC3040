@@ -229,18 +229,28 @@ export class UserService {
   }
 
   // Retrieve and decrypt the API key when needed
-  public getDecryptedApiKey(user: UserDocument, model: string): string {
-    const encryptedKey =
+  public getDecryptedApiKey(
+    user: UserDocument,
+    model: string,
+  ): { geminiKey: string; openaiKey: string } {
+    const isKeySet =
       model === 'GEMINI' ? user.apiToken?.geminiKey : user.apiToken?.openaiKey;
 
-    if (!encryptedKey) {
+    if (!isKeySet) {
       throw new HttpException(
-        `API key for model ${model} is not set`,
+        `API key for default model ${model} is not set`,
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    return this.decrypt(encryptedKey);
+    return {
+      geminiKey: user.apiToken?.geminiKey
+        ? this.decrypt(user.apiToken.geminiKey)
+        : 'UNSET',
+      openaiKey: user.apiToken?.openaiKey
+        ? this.decrypt(user.apiToken.openaiKey)
+        : 'UNSET',
+    };
   }
 
   // Authenticate user during login
