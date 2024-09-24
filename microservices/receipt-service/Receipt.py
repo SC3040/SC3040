@@ -17,7 +17,8 @@ class ReceiptError(Exception):
 class APIKeyError(Exception):
     """Invalid API key"""
     def __init__(self):
-        super().__init__("Invalid API key")
+        # No message needed
+        super().__init__()
 
 
 class Category(Enum):
