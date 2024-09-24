@@ -5,14 +5,16 @@ from gemini import GeminiReceiptParser
 from Receipt import ReceiptEncoder
 from gpt4o import OpenAIReceiptParser
 from flask import Response
+from pdf2image import convert_from_bytes
 import json
+import PIL.Image
 
 def create_app():
     app = Flask(__name__)
     app.json_encoder = ReceiptEncoder
     CORS(app, resources={r"/*": {"origins": "*"}})
 
-    VALID_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    VALID_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 
     def allowed_file(filename):
         return '.' in filename and \
@@ -40,8 +42,16 @@ def create_app():
 
         # If file is present and correct type
         if file and allowed_file(file.filename):
-            # filename = secure_filename(file.filename)
+            filename = secure_filename(file.filename)
             # file.save(filename)
+
+            # Different format handler
+            if filename.rsplit('.', 1)[1].lower() == 'pdf':
+                file = convert_from_bytes(file.read())
+                receipt_obj_list = [img for img in file]
+            else:
+                # Single Png/jpg image
+                receipt_obj_list = [PIL.Image.open(file)]
 
             # Initialize the receipt parser based on the model
             if model == 'GEMINI':
@@ -53,7 +63,7 @@ def create_app():
                 return jsonify({'error': 'Unsupported model parameter received'}), 400
 
             # Parse the receipt
-            response = receipt_parser.parse(file)
+            response = receipt_parser.parse(receipt_obj_list)
 
             if response is None:
                 return jsonify({'error': 'Image is not a receipt or error parsing receipt'}), 400
