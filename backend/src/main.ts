@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { ReporterService } from './reporter/reporter.service';
+import { MetricsService } from './metrics/metrics.service';
 
 async function bootstrap() {
   const appOptions = { cors: true };
@@ -28,6 +30,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('/docs', app, document);
 
+  ReporterService.init(app.get(MetricsService));
   await app.listen(8080);
 }
 bootstrap();
