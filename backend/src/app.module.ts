@@ -1,4 +1,9 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import {
+  Module,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { ReceiptModule } from './receipt/receipt.module';
@@ -34,7 +39,10 @@ import { ErrorTrackingMiddleware } from './metrics/error-tracking.middleware'; /
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply RequestTimingMiddleware globally for all routes
-    consumer.apply(RequestTimingMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestTimingMiddleware)
+      .exclude({ path: '/metrics', method: RequestMethod.ALL })
+      .forRoutes('*');
     // Apply ErrorTrackingMiddleware globally for all routes
     consumer.apply(ErrorTrackingMiddleware).forRoutes('*');
   }

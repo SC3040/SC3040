@@ -173,14 +173,16 @@ export class ReceiptService {
     // Determine model and API key
     const model = user.apiToken.defaultModel;
     let geminiKey: string, openaiKey: string;
+
     try {
       ({ geminiKey, openaiKey } = this.userService.getDecryptedApiKey(
         user,
         model,
       ));
-    } catch {
+      // this.logger.log(`geminiKey: ${geminiKey}, openaiKey: ${openaiKey}`);
+    } catch (error) {
       throw new HttpException(
-        'API key not set for the selected model',
+        `API key not set for the selected model: ${error.message}`,
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -200,6 +202,7 @@ export class ReceiptService {
       formData.append('openaiKey', openaiKey);
 
       this.logger.log('Sending image to Flask for processing');
+      this.logger.log('formData:', formData.toString());
 
       const response = await axios.post(
         'http://receipt-service:8081/upload',
