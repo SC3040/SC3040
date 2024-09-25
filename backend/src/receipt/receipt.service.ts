@@ -7,6 +7,7 @@ import { UserService } from '../user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { parse } from 'date-fns';
+import { TrackErrors } from '../metrics/function-error.decorator';
 
 @Injectable()
 export class ReceiptService {
@@ -19,6 +20,7 @@ export class ReceiptService {
   ) {}
 
   // Stage 1: Process receipt image and return data without saving
+  @TrackErrors
   async processReceipt(
     userId: string,
     image: Express.Multer.File,
@@ -60,6 +62,7 @@ export class ReceiptService {
   }
 
   // Stage 2: Create a new receipt for the user
+  @TrackErrors
   async createReceipt(
     userId: string,
     createReceiptDto: CreateReceiptDto,
@@ -90,6 +93,7 @@ export class ReceiptService {
   }
 
   // Update an existing receipt
+  @TrackErrors
   async updateReceipt(
     userId: string,
     receiptId: string,
@@ -126,6 +130,7 @@ export class ReceiptService {
   }
 
   // Delete a receipt
+  @TrackErrors
   async deleteReceipt(
     userId: string,
     receiptId: string,
@@ -144,6 +149,7 @@ export class ReceiptService {
   }
 
   // Get all receipts for a user
+  @TrackErrors
   async getReceiptsByUser(userId: string): Promise<ReceiptResponseDto[]> {
     this.logger.log('Fetching receipts for user:', userId);
     const receipts = await this.receiptModel.find({ userId });
@@ -166,9 +172,12 @@ export class ReceiptService {
 
     // Determine model and API key
     const model = user.apiToken.defaultModel;
-    let apiKey: string;
+    let geminiKey: string, openaiKey: string;
     try {
-      apiKey = this.userService.getDecryptedApiKey(user, model);
+      ({ geminiKey, openaiKey } = this.userService.getDecryptedApiKey(
+        user,
+        model,
+      ));
     } catch {
       throw new HttpException(
         'API key not set for the selected model',
@@ -186,8 +195,11 @@ export class ReceiptService {
       });
 
       // Append model and apiKey to form data
-      formData.append('model', model);
-      formData.append('apiKey', apiKey);
+      formData.append('defaultModel', model);
+      formData.append('apiKey', geminiKey);
+      formData.append('openaiKey', openaiKey);
+
+      this.logger.log('Sending image to Flask for processing');
 
       const response = await axios.post(
         'http://receipt-service:8081/upload',

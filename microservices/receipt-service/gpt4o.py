@@ -1,11 +1,12 @@
 from openai import OpenAI
-from werkzeug.datastructures import FileStorage
-import base64
 from pydantic import BaseModel
 from typing import Optional
-from Receipt import Receipt, ReceiptError, Category
+from Receipt import Receipt, ReceiptError, Category, APIKeyError
 import json
 import tiktoken
+import base64
+from io import BytesIO
+from openai import AuthenticationError
 
 # Response schema
 class LineItemSchema(BaseModel):
@@ -30,8 +31,8 @@ If the image given is not a receipt, please return Invalid category and ignore a
 
         # Chat session specific attributes
         self.messages = []
-        self.max_retry = 3
-        self.buffer = 512 # Should be same as max_tokens output
+        self.max_retry = 3+1 # 3 retries, 1 initial attempt
+        self.buffer = 2048 # Should be same as max_tokens output
 
         # Generation config
         self.generation_config = {
@@ -42,7 +43,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
             'response_format': ReceiptResponseSchema, # Define the schema of the response
         }
 
-    def parse(self, img: FileStorage):
+    def parse(self, img_list):
         # Define prompt
         prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
 If the values are not present, please return 'None' for them.
@@ -58,14 +59,16 @@ itemized_list: A list of line items, each containing:
 """.strip()
 
         # Convert to base64 first
-        image_b64 = self.encode_img(img)
+        img_b64_list = []
+        for img in img_list:
+            img_b64_list.append(self.encode_img(img))
 
         # Add system instruction
         self.append_message("system", self.system_instruction)
         # Combine user prompt and image
         combined_prompt = [
             {"type": "text", "text": prompt},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}", "detail": "high"}}
+            *[{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}", "detail": "high"}} for img_b64 in img_b64_list]
         ]
         # Add user request and image
         self.append_message("user", combined_prompt)
@@ -73,12 +76,15 @@ itemized_list: A list of line items, each containing:
         for attempt_num in range(self.max_retry):
             # Send the request
             # Create API request with local image
-            response = self.client.beta.chat.completions.parse(
-                model=self.model_version,
-                messages=self.messages,
-                **self.generation_config
-            )
-            print(response)
+            try:
+                response = self.client.beta.chat.completions.parse(
+                    model=self.model_version,
+                    messages=self.messages,
+                    **self.generation_config
+                )
+            except AuthenticationError:
+                raise APIKeyError()
+
             # Append response to messages
             response_content = response.choices[0].message.content
             self.append_message("assistant", response_content)
@@ -133,7 +139,9 @@ itemized_list: A list of line items, each containing:
         self.messages.append({"role": role, "content": content})
 
     @staticmethod
-    def encode_img(img: FileStorage):
-        img.seek(0)
-        image_b64 = base64.b64encode(img.read()).decode('utf-8')
+    def encode_img(img):
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG")
+        buffer.seek(0)
+        image_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         return image_b64

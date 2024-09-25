@@ -1,10 +1,12 @@
+from http.client import responses
+
 import google.generativeai as genai
-import PIL.Image
 from werkzeug.datastructures import FileStorage
 import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
-from Receipt import Receipt, ReceiptError, Category
+from Receipt import Receipt, ReceiptError, Category, APIKeyError
+from google.api_core.exceptions import InvalidArgument
 
 # Define the template of the return json obj
 # Method 1
@@ -59,7 +61,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
                 # Chat instance attributes
                 self.response = None
                 self.max_retry = 3
-                self.buffer = 512
+                self.buffer = 2048
 
                 # Generation config
                 self.generation_config = genai.types.GenerationConfig(
@@ -83,7 +85,11 @@ If the image given is not a receipt, please return Invalid category and ignore a
                 # Init the model
                 self.model = genai.GenerativeModel(model_name=model_version, system_instruction=self.system_instruction,
                                                    generation_config=self.generation_config, safety_settings=self.safety_settings)
-                self.model_info = genai.get_model(model_version)
+                try:
+                    self.model_info = genai.get_model(model_version)
+                except InvalidArgument as e:
+                    if e.code == 400 and "API key not valid" in str(e):
+                        raise APIKeyError()
 
                 # Init chat instance
                 self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
@@ -91,7 +97,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
         def get_token_count(self, prompt):
                 return int(self.model.count_tokens(prompt).total_tokens)
 
-        def parse(self, img_obj: FileStorage):
+        def parse(self, receipt_obj_list):
                 # Define prompt
                 prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
 If the values are not present, please return 'None' for them.
@@ -105,11 +111,9 @@ itemized_list: A list of line items, each containing:
     item_cost: The cost of the item
     item_quantity: The quantity of the item
 """.strip()
-                # Load the image
-                receipt_image = PIL.Image.open(img_obj)
 
                 # Generate the receipt
-                self.response = self.chat_instance.send_message([prompt, receipt_image],
+                self.response = self.chat_instance.send_message([prompt, *receipt_obj_list],
                                                            generation_config=self.generation_config,
                                                            safety_settings=self.safety_settings)
 
