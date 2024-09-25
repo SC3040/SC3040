@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from gemini import GeminiReceiptParser
-from Receipt import ReceiptEncoder, APIKeyError
+from Receipt import ReceiptEncoder
+from Exceptions import APIKeyError
 from gpt4o import OpenAIReceiptParser
 from flask import Response
 from pdf2image import convert_from_bytes
@@ -22,6 +23,7 @@ def create_app():
 
     @app.route('/upload', methods=['POST'])
     def upload_file():
+        # Check for parameters
         if 'file' not in request.files:
             return jsonify({'error': 'No file received'}), 400
 
