@@ -7,6 +7,7 @@ import { UserService } from '../user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { parse } from 'date-fns';
+import { TrackErrors } from '../metrics/function-error.decorator';
 
 @Injectable()
 export class ReceiptService {
@@ -19,6 +20,7 @@ export class ReceiptService {
   ) {}
 
   // Stage 1: Process receipt image and return data without saving
+  @TrackErrors
   async processReceipt(
     userId: string,
     image: Express.Multer.File,
@@ -60,6 +62,7 @@ export class ReceiptService {
   }
 
   // Stage 2: Create a new receipt for the user
+  @TrackErrors
   async createReceipt(
     userId: string,
     createReceiptDto: CreateReceiptDto,
@@ -90,6 +93,7 @@ export class ReceiptService {
   }
 
   // Update an existing receipt
+  @TrackErrors
   async updateReceipt(
     userId: string,
     receiptId: string,
@@ -126,6 +130,7 @@ export class ReceiptService {
   }
 
   // Delete a receipt
+  @TrackErrors
   async deleteReceipt(
     userId: string,
     receiptId: string,
@@ -144,6 +149,7 @@ export class ReceiptService {
   }
 
   // Get all receipts for a user
+  @TrackErrors
   async getReceiptsByUser(userId: string): Promise<ReceiptResponseDto[]> {
     this.logger.log('Fetching receipts for user:', userId);
     const receipts = await this.receiptModel.find({ userId });

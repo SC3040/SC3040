@@ -28,6 +28,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { UserDocument } from './schemas/user.schema';
+import { TrackErrors } from '../metrics/function-error.decorator';
 
 @Injectable()
 export class UserService {
@@ -100,6 +101,7 @@ export class UserService {
   }
 
   // Create new user
+  @TrackErrors
   async create(
     createUserDto: CreateUserDto,
   ): Promise<{ user: UserResponseDto; token: string }> {
@@ -146,6 +148,7 @@ export class UserService {
   }
 
   // Update user details
+  @TrackErrors
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -172,6 +175,7 @@ export class UserService {
   }
 
   // Find user by ID
+  @TrackErrors
   async findById(id: string): Promise<UserResponseDto> {
     const user = await this.userModel.findById(id);
     if (!user) {
@@ -181,6 +185,7 @@ export class UserService {
   }
 
   // Retrieves raw entity by ID, required for authentication middleware
+  @TrackErrors
   async findEntityById(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id);
     if (!user) {
@@ -190,6 +195,7 @@ export class UserService {
   }
 
   // Update API tokens
+  @TrackErrors
   async updateApiToken(
     id: string,
     updateApiTokenDto: UpdateApiTokenDto,
@@ -215,6 +221,7 @@ export class UserService {
   }
 
   // Retrieve API tokens
+  @TrackErrors
   async getApiToken(id: string): Promise<ApiTokenResponseDto> {
     const user = await this.userModel.findById(id);
     if (!user) {
@@ -229,7 +236,8 @@ export class UserService {
   }
 
   // Retrieve and decrypt the API key when needed
-  public getDecryptedApiKey(
+  @TrackErrors
+  getDecryptedApiKey(
     user: UserDocument,
     model: string,
   ): { geminiKey: string; openaiKey: string } {
@@ -254,6 +262,7 @@ export class UserService {
   }
 
   // Authenticate user during login
+  @TrackErrors
   async login(
     loginRequestDto: LoginRequestDto,
   ): Promise<{ user: UserResponseDto; token: string }> {
@@ -280,7 +289,7 @@ export class UserService {
     );
   }
 
-  public buildUserResponse(user: UserDocument): UserResponseDto {
+  private buildUserResponse(user: UserDocument): UserResponseDto {
     // Convert the Mongoose model to a plain object
     const userObject = user.toObject({ versionKey: false });
 
@@ -302,6 +311,7 @@ export class UserService {
   }
 
   // Fetch security question using the reset token
+  @TrackErrors
   async getSecurityQuestion(token: string): Promise<string> {
     const user = await this.userModel.findOne({ passwordResetToken: token });
     if (!user || user.passwordResetTokenExpiry < new Date()) {
@@ -316,6 +326,7 @@ export class UserService {
   }
 
   // Initiate password reset
+  @TrackErrors
   async requestPasswordReset(
     requestPasswordResetDto: RequestPasswordResetDto,
   ): Promise<void> {
@@ -364,6 +375,7 @@ export class UserService {
   }
 
   // Verify security question
+  @TrackErrors
   async verifySecurityQuestion(
     verifySecurityQuestionDto: VerifySecurityQuestionDto,
   ): Promise<boolean> {
@@ -381,6 +393,7 @@ export class UserService {
   }
 
   // Reset the password
+  @TrackErrors
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
     const { token, newPassword } = resetPasswordDto;
     const user = await this.userModel.findOne({ passwordResetToken: token });
