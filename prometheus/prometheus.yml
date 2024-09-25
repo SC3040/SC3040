@@ -11,4 +11,4 @@ scrape_configs:
   - job_name: 'nestjs'
     static_configs:
       - targets: ['backend:8080']
-    metrics_path: '/api/metrics' # Scrape from the metrics endpoint
+    metrics_path: '/metrics' # Scrape from the metrics endpoint
