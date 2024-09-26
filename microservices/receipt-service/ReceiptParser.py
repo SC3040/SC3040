@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
 class AbstractParser(ABC):
-    def __init__(self, api_key: str, receipt_schema, model_name: str, max_retry: int = 3, buffer: int = 2048):
+    def __init__(self, api_key: str, receipt_schema, model_name: str, max_retry: int = 4, buffer: int = 2048):
         self.api_key = api_key
+        # Default = 4, 3 retries + 1 initial
         self.max_retry = max_retry
         self.buffer = buffer
         self.receipt_schema = receipt_schema

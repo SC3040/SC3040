@@ -95,39 +95,41 @@ class GeminiReceiptParser(AbstractParser):
                 return int(self.model.count_tokens(prompt).total_tokens)
 
         def parse(self, receipt_obj_list):
+            messages = [[self.initial_prompt, *receipt_obj_list]]
+
+            for attempt_num in range(self.max_retry):
                 # Generate the receipt
-                self.response = self.chat_instance.send_message([self.initial_prompt, *receipt_obj_list],
+                print(messages[-1])
+                self.response = self.chat_instance.send_message(messages[-1],
                                                            generation_config=self.generation_config,
                                                            safety_settings=self.safety_settings)
 
-                for attempt_num in range(self.max_retry):
-                    # Attempt to parse the receipt
-                    try:
-                        receipt_dict = json.loads(self.response.text)
+                # Attempt to parse the receipt
+                try:
+                    receipt_dict = json.loads(self.response.text)
 
-                        # If model returns None for all fields, return None
-                        if receipt_dict['category'] == Category.INVALID.value:
-                            print("Image is not a receipt.")
-                            return None
+                    # If model returns None for all fields, return None
+                    if receipt_dict['category'] == Category.INVALID.value:
+                        print("Image is not a receipt.")
+                        return None
 
-                        receipt_instance = Receipt(**receipt_dict)
-                        print(f"Attempt {attempt_num + 1} Success")
+                    receipt_instance = Receipt(**receipt_dict)
+                    print(f"Attempt {attempt_num + 1} Success")
 
-                        return receipt_instance
-                    except ReceiptError as e:
-                        print(f"Attempt {attempt_num + 1} Error: {e}")
+                    return receipt_instance
+                except ReceiptError as e:
+                    print(f"Attempt {attempt_num + 1} Error: {e}")
 
-                        # If max retry reached or token limit reached, return None
-                        if (attempt_num + 1 == self.max_retry or
-                                self.response.usage_metadata.total_token_count +
-                                self.get_token_count(str(e)) + self.buffer >
-                                self.model_info.input_token_limit):
-                            print("Max retry reached. Unable to parse receipt.")
-                            return None
+                    # If max retry reached or token limit reached, return None
+                    if (attempt_num + 1 == self.max_retry or
+                            self.response.usage_metadata.total_token_count +
+                            self.get_token_count(str(e)) + self.buffer >
+                            self.model_info.input_token_limit):
+                        print("Max retry reached. Unable to parse receipt.")
+                        return None
 
-                        # Continue the conversation, highlighting the error
-                        self.response = self.chat_instance.send_message([str(e)],
-                                                                        generation_config=self.generation_config,
-                                                                        safety_settings=self.safety_settings)
+                    # Still have retries left, retry
+                    messages.append([str(e)])
+                    continue
 
-                return receipt_instance
+            return None
