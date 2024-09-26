@@ -200,9 +200,11 @@ export class ReceiptService {
       formData.append('defaultModel', model);
       formData.append('apiKey', geminiKey);
       formData.append('openaiKey', openaiKey);
+      this.logger.log('defaultModel:', model);
+      this.logger.log('apiKey:', geminiKey);
+      this.logger.log('openaiKey:', openaiKey);
 
       this.logger.log('Sending image to Flask for processing');
-      this.logger.log('formData:', formData.toString());
 
       const response = await axios.post(
         'http://receipt-service:8081/upload',
