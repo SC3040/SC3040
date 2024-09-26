@@ -115,8 +115,6 @@ services:
       - ./microservices/receipt-service:/src/receipt-service
     environment:
       - FLASK_ENV=development
-    env_file:
-      - .env
     develop:
       watch:
         - path: ./microservices/receipt-service

@@ -41,7 +41,7 @@ def create_app():
         if not default_model:
             return jsonify({'error': 'Missing defaultModel parameter'}), 400
 
-        if gemini_api_key=='UNSET' and openai_api_key=='UNSET':
+        if gemini_api_key=='UNSET' and openai_api_key=='UNSET' or gemini_api_key is None and openai_api_key is None:
             return jsonify({'error': 'Missing geminiKey or openaiKey parameter, at least 1 key is needed'}), 400
 
         # If file is present and correct type

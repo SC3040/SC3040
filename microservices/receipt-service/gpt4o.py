@@ -107,9 +107,8 @@ class OpenAIReceiptParser(AbstractParser):
         }
         return mapper_dict[model_version]
 
-    @staticmethod
-    def get_token_count(prompt: str, model_version: str = 'gpt-4o-mini') -> int:
-        encoding = tiktoken.encoding_for_model(model_version)
+    def get_token_count(self, prompt: str) -> int:
+        encoding = tiktoken.encoding_for_model(self.model_name)
         num_tokens = len(encoding.encode(prompt))
         return num_tokens
 

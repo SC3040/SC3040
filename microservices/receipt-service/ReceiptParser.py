@@ -25,3 +25,7 @@ If the image given is not a receipt, please return Invalid category and ignore a
     @abstractmethod
     def parse(self, receipt_obj_list):
         pass
+
+    @abstractmethod
+    def get_token_count(self, prompt):
+        pass
