@@ -198,10 +198,10 @@ export class ReceiptService {
 
       // Append model and apiKey to form data
       formData.append('defaultModel', model);
-      formData.append('apiKey', geminiKey);
+      formData.append('geminiKey', geminiKey);
       formData.append('openaiKey', openaiKey);
       this.logger.log('defaultModel:', model);
-      this.logger.log('apiKey:', geminiKey);
+      this.logger.log('geminiKey:', geminiKey);
       this.logger.log('openaiKey:', openaiKey);
 
       this.logger.log('Sending image to Flask for processing');
