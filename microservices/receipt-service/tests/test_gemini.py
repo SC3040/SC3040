@@ -8,8 +8,9 @@ def test_receipt_images(app_client, receipt_images, receipt_image_ans, subtests)
         with subtests.test(msg=f"Evaluating image: {image_name}"):
             data = {
                 'file': (file_to_test.stream, file_to_test.filename, file_to_test.content_type),
-                'model': 'GEMINI',
-                'apiKey': os.getenv('GOOGLE_API_KEY')
+                'defaultModel': 'GEMINI',
+                'geminiKey': os.getenv('geminiKey'),
+                'openaiKey': 'UNSET'
             }
 
             response = app_client.post(
@@ -29,8 +30,9 @@ def test_non_receipt_images(app_client, non_receipt_images, subtests):
         with subtests.test(msg=f"Evaluating image: {image_name}"):
             data = {
                 'file': (file_to_test.stream, file_to_test.filename, file_to_test.content_type),
-                'model': 'GEMINI',
-                'apiKey': os.getenv('GOOGLE_API_KEY')
+                'defaultModel': 'GEMINI',
+                'geminiKey': os.getenv('geminiKey'),
+                'openaiKey': 'UNSET'
             }
 
             response = app_client.post(

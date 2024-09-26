@@ -76,6 +76,9 @@ export class UserService {
 
   // Utility method to decrypt the key
   private decrypt(encryptedText: string): string {
+    if (!encryptedText || !encryptedText.includes(':')) {
+      throw new Error(`Invalid encrypted key format ${encryptedText}`);
+    }
     const [ivHex, encryptedData] = encryptedText.split(':');
     const ivBuffer = Buffer.from(ivHex, 'hex');
     const decipher = createDecipheriv(

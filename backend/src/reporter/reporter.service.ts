@@ -18,4 +18,12 @@ export class ReporterService {
   ): void {
     ReporterService.metricsService.setGauge(key, value, labels);
   }
+
+  static histogram(
+    key: string,
+    value: number,
+    labels?: Record<string, string | number>,
+  ): void {
+    ReporterService.metricsService.observeHistogram(key, value, labels);
+  }
 }

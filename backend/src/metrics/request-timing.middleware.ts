@@ -8,7 +8,8 @@ export class RequestTimingMiddleware implements NestMiddleware {
     res.on('finish', () => {
       const [seconds, nanoseconds] = process.hrtime(start);
       const durationInSeconds = seconds + nanoseconds / 1e9;
-      ReporterService.gauge(
+
+      ReporterService.histogram(
         'http_request_duration_seconds',
         durationInSeconds,
         {
@@ -18,6 +19,7 @@ export class RequestTimingMiddleware implements NestMiddleware {
         },
       );
     });
+
     next();
   }
 }

@@ -1,12 +1,13 @@
-from http.client import responses
-
+# from werkzeug.datastructures import FileStorage
+# import typing_extensions
 import google.generativeai as genai
-from werkzeug.datastructures import FileStorage
-import typing_extensions
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
-from Receipt import Receipt, ReceiptError, Category, APIKeyError
+from Receipt import Receipt, ReceiptError, Category
+from Exceptions import APIKeyError
 from google.api_core.exceptions import InvalidArgument
+from ReceiptParser import AbstractParser
+
 
 # Define the template of the return json obj
 # Method 1
@@ -23,128 +24,112 @@ from google.api_core.exceptions import InvalidArgument
 #     date: str
 #     itemized_list: list[LineItemSchema]
 
-# Method 2
-receipt_schema = genai.protos.Schema(
-    type=genai.protos.Type.OBJECT,
-    properties={
-        'merchant_name': genai.protos.Schema(type=genai.protos.Type.STRING),
-        'date': genai.protos.Schema(type=genai.protos.Type.STRING),
-        'total_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
-        'category': genai.protos.Schema(
-            type=genai.protos.Type.STRING,
-            enum=[category.value for category in Category]
-        ),
-        'itemized_list': genai.protos.Schema(
-            type=genai.protos.Type.ARRAY,
-            items=genai.protos.Schema(
+
+class GeminiReceiptParser(AbstractParser):
+        def __init__(self, api_key: str, model_version: str = 'models/gemini-1.5-flash'):
+            # Method 2
+            receipt_schema = genai.protos.Schema(
                 type=genai.protos.Type.OBJECT,
                 properties={
-                    'item_name': genai.protos.Schema(type=genai.protos.Type.STRING),
-                    'item_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
-                    'item_quantity': genai.protos.Schema(type=genai.protos.Type.STRING),
-                }
+                    'merchant_name': genai.protos.Schema(type=genai.protos.Type.STRING),
+                    'date': genai.protos.Schema(type=genai.protos.Type.STRING),
+                    'total_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
+                    'category': genai.protos.Schema(
+                        type=genai.protos.Type.STRING,
+                        enum=[category.value for category in Category]
+                    ),
+                    'itemized_list': genai.protos.Schema(
+                        type=genai.protos.Type.ARRAY,
+                        items=genai.protos.Schema(
+                            type=genai.protos.Type.OBJECT,
+                            properties={
+                                'item_name': genai.protos.Schema(type=genai.protos.Type.STRING),
+                                'item_cost': genai.protos.Schema(type=genai.protos.Type.STRING),
+                                'item_quantity': genai.protos.Schema(type=genai.protos.Type.STRING),
+                            }
+                        )
+                    )
+                },
+                required=['merchant_name', 'date', 'total_cost', 'category', 'itemized_list']
             )
-        )
-    },
-    required=['merchant_name', 'date', 'total_cost', 'category', 'itemized_list']
-)
+            # Call the parent class constructor
+            super().__init__(api_key=api_key, receipt_schema=receipt_schema, model_name=model_version)
+            # Configure the API key
+            genai.configure(api_key=self.api_key)
+            # Setup model config
+            # Chat instance attributes
+            self.response = None
 
+            # Generation config
+            self.generation_config = genai.types.GenerationConfig(
+                    candidate_count=1, # Only need 1 candidate
+                    stop_sequences=None, # Dont need to control model to stop
+                    max_output_tokens=self.buffer, # max number of tokens to generate, should be same as buffer
+                    temperature=0.1, # Low temperature to because OCR is deterministic task
+                    top_p=0.1, # Low top_p to because OCR is deterministic task
+                    top_k=1, # Greedy decoding because OCR is deterministic task
+                    response_mime_type="application/json", # Output in json
+                    response_schema=self.receipt_schema, # Also follow json schema
+            )
+            # Turn off safety settings to ensure explicit shop names or line items can be parsed
+            self.safety_settings = {
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+            }
 
-class GeminiReceiptParser:
-        def __init__(self, api_key: str, model_version: str = 'models/gemini-1.5-flash'):
-                # Configure the API key
-                genai.configure(api_key=api_key)
-                # Setup model config
-                self.system_instruction = """You are an AI language model tasked with extracting key information from a receipt.
-If the image given is not a receipt, please return Invalid category and ignore all other fields. If the values are not present, please return 'None' for them."""
+            # Init the model
+            self.model = genai.GenerativeModel(model_name=self.model_name, system_instruction=self.system_instruction,
+                                               generation_config=self.generation_config, safety_settings=self.safety_settings)
+            try:
+                self.model_info = genai.get_model(self.model_name)
+            except InvalidArgument as e:
+                if e.code == 400 and "API key not valid" in str(e):
+                    raise APIKeyError()
 
-                # Chat instance attributes
-                self.response = None
-                self.max_retry = 3
-                self.buffer = 2048
-
-                # Generation config
-                self.generation_config = genai.types.GenerationConfig(
-                        candidate_count=1, # Only need 1 candidate
-                        stop_sequences=None, # Dont need to control model to stop
-                        max_output_tokens=self.buffer, # max number of tokens to generate, should be same as buffer
-                        temperature=0.1, # Low temperature to because OCR is deterministic task
-                        top_p=0.1, # Low top_p to because OCR is deterministic task
-                        top_k=1, # Greedy decoding because OCR is deterministic task
-                        response_mime_type="application/json", # Output in json
-                        response_schema=receipt_schema, # Also follow json schema
-                )
-                # Turn off safety settings to ensure explicit shop names or line items can be parsed
-                self.safety_settings = {
-                        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                }
-
-                # Init the model
-                self.model = genai.GenerativeModel(model_name=model_version, system_instruction=self.system_instruction,
-                                                   generation_config=self.generation_config, safety_settings=self.safety_settings)
-                try:
-                    self.model_info = genai.get_model(model_version)
-                except InvalidArgument as e:
-                    if e.code == 400 and "API key not valid" in str(e):
-                        raise APIKeyError()
-
-                # Init chat instance
-                self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
+            # Init chat instance
+            self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
 
         def get_token_count(self, prompt):
                 return int(self.model.count_tokens(prompt).total_tokens)
 
         def parse(self, receipt_obj_list):
-                # Define prompt
-                prompt = """Given an image of a receipt, extract information from the receipt. If the image is not a receipt, please return Invalid category and ignore all other fields.
-If the values are not present, please return 'None' for them.
+            messages = [[self.initial_prompt, *receipt_obj_list]]
 
-merchant_name: The name of the merchant
-total_cost: The total cost of the receipt
-category: The category of spending (Transport, Clothing, Healthcare, Food, Leisure, Housing, Others, Invalid). Only return Invalid if the image is not a receipt.
-date: The date of the receipt
-itemized_list: A list of line items, each containing:
-    item_name: The name of the item
-    item_cost: The cost of the item
-    item_quantity: The quantity of the item
-""".strip()
-
+            for attempt_num in range(self.max_retry):
                 # Generate the receipt
-                self.response = self.chat_instance.send_message([prompt, *receipt_obj_list],
+                print(messages[-1])
+                self.response = self.chat_instance.send_message(messages[-1],
                                                            generation_config=self.generation_config,
                                                            safety_settings=self.safety_settings)
 
-                for attempt_num in range(self.max_retry):
-                    # Attempt to parse the receipt
-                    try:
-                        receipt_dict = json.loads(self.response.text)
+                # Attempt to parse the receipt
+                try:
+                    receipt_dict = json.loads(self.response.text)
 
-                        # If model returns None for all fields, return None
-                        if receipt_dict['category'] == Category.INVALID.value:
-                            print("Image is not a receipt.")
-                            return None
+                    # If model returns None for all fields, return None
+                    if receipt_dict['category'] == Category.INVALID.value:
+                        print("Image is not a receipt.")
+                        return None
 
-                        receipt_instance = Receipt(**receipt_dict)
-                        print(f"Attempt {attempt_num + 1} Success")
+                    receipt_instance = Receipt(**receipt_dict)
+                    print(f"Attempt {attempt_num + 1} Success")
 
-                        return receipt_instance
-                    except ReceiptError as e:
-                        print(f"Attempt {attempt_num + 1} Error: {e}")
+                    return receipt_instance
+                except ReceiptError as e:
+                    print(f"Attempt {attempt_num + 1} Error: {e}")
 
-                        # If max retry reached or token limit reached, return None
-                        if (attempt_num + 1 == self.max_retry or
-                                self.response.usage_metadata.total_token_count +
-                                self.get_token_count(str(e)) + self.buffer >
-                                self.model_info.input_token_limit):
-                            print("Max retry reached. Unable to parse receipt.")
-                            return None
+                    # If max retry reached or token limit reached, return None
+                    if (attempt_num + 1 == self.max_retry or
+                            self.response.usage_metadata.total_token_count +
+                            self.get_token_count(str(e)) + self.buffer >
+                            self.model_info.input_token_limit):
+                        print("Max retry reached. Unable to parse receipt.")
+                        return None
 
-                        # Continue the conversation, highlighting the error
-                        self.response = self.chat_instance.send_message([str(e)],
-                                                                        generation_config=self.generation_config,
-                                                                        safety_settings=self.safety_settings)
+                    # Still have retries left, retry
+                    messages.append([str(e)])
+                    continue
 
-                return receipt_instance
+            return None
