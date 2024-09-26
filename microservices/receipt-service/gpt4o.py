@@ -56,7 +56,6 @@ class OpenAIReceiptParser(AbstractParser):
 
         for attempt_num in range(self.max_retry):
             # Send the request
-            # Create API request with local image
             try:
                 response = self.client.beta.chat.completions.parse(
                     model=self.model_name,
@@ -64,6 +63,7 @@ class OpenAIReceiptParser(AbstractParser):
                     **self.generation_config
                 )
             except AuthenticationError:
+                # Exit out to receipt service
                 raise APIKeyError()
 
             # Append response to messages
@@ -95,7 +95,7 @@ class OpenAIReceiptParser(AbstractParser):
                 # Continue the conversation, highlighting the error
                 self.append_message("user", str(e))
 
-        return receipt_dict
+        return None
 
     @staticmethod
     def get_token_limit(model_version: str) -> int:
