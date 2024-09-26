@@ -34,13 +34,19 @@ def load_images(images_dir):
 
 @pytest.fixture(scope="module")
 def receipt_images():
-    images_dir = Path(__file__).parent / 'test_images/receipts'
-    return load_images(images_dir)
+    paths = ['media/receipts_images', 'media/receipts_pdfs']
+    images = {}
+
+    for path in paths:
+        images_dir = Path(__file__).parent / path
+        images.update(load_images(images_dir))
+
+    return images
 
 
 @pytest.fixture(scope="module")
 def non_receipt_images():
-    images_dir = Path(__file__).parent / 'test_images/non-receipts'
+    images_dir = Path(__file__).parent / 'media/non-receipts_images'
     return load_images(images_dir)
 
 
@@ -88,7 +94,19 @@ def receipt_image_ans():
             "date": "01/05/2018",
             "total_cost": "175.00",
             "category": "HOUSING",
-        }
+        },
+        'electronics_single_page_test1.pdf': {
+            "merchant_name": "SuperStore",
+            "date": "14/02/2012",
+            "total_cost": "5403.47",
+            "category": "OTHERS"
+        },
+        'insurance_multi_page_test1.pdf': {
+            "merchant_name": "META\nLEGAL & FINANCE",
+            "date": "12/03/2024",
+            "total_cost": "5715.00",
+            "category": "OTHERS"
+        },
     }
 
     return ans_dict
