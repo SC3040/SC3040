@@ -19,7 +19,6 @@ class WebTest:
         try:
             if self.browser.lower() == 'chrome':
                 chrome_options = ChromeOptions()
-                #chrome_options.add_argument("--remote-debugging-port=9222")
                 service = ChromeService(executable_path=self.executable_path)
                 self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
