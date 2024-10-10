@@ -26,14 +26,6 @@ class ItemDto {
 }
 
 export class UpdateReceiptDto {
-  @ApiProperty({
-    description: 'Unique identifier of the receipt',
-    example: '650c59a88f1e78c88102d1a4',
-  })
-  @IsNotEmpty()
-  @IsString()
-  id: string;
-
   @ApiProperty({ description: 'Merchant name', example: 'KFC' })
   @IsNotEmpty()
   merchantName: string;
