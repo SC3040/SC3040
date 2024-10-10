@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/AuthProvider'
 import { useEffect, useState } from 'react'
 import LineChartC from '@/components/charts/linechart'
 import BarChartC from '@/components/charts/barchart'
-import DataTable from "@/components/table/TransactionTable";
+import TableC from '@/components/table/TableC'
 import { columns } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
 import { ReceiptResponse } from "@/app/api/receipt/route";
@@ -44,7 +44,7 @@ const HomePage = () => {
                     <BarChartC data={receiptData}/>
                 </div>
                 <div className="w-1/2">
-                    <DataTable columns={columns} data={receiptData}/>
+                    <TableC columns={columns} data={receiptData} displayRows={5} />
                 </div>
             </div>
         </div>

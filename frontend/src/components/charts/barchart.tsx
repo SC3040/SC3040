@@ -34,7 +34,7 @@ export default function BarChartC({ data }: BarChartCProps): JSX.Element {
     <Card className="w-full bg-transparent">
       <CardHeader>
         <CardTitle>Spending by Category</CardTitle>
-        <CardDescription>Total spending per category</CardDescription>
+        <CardDescription>Total spending by category</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

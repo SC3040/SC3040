@@ -45,11 +45,13 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  displayRows: number
 }
 
 export default function DataTable<TData, TValue>({
   columns,
   data,
+  displayRows = 10,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -68,7 +70,17 @@ export default function DataTable<TData, TValue>({
       sorting,
       columnFilters,
       columnVisibility,
+      pagination: {
+        pageIndex: 0,
+        pageSize: displayRows
+      }
     },
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 0
+      }
+    }
   })
 
   useEffect(() => {

@@ -35,7 +35,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     <Card className="w-full bg-transparent">
       <CardHeader>
         <CardTitle>Monthly Spending Trend</CardTitle>
-        <CardDescription>Total spending per month</CardDescription>
+        <CardDescription>Total spending by month</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
