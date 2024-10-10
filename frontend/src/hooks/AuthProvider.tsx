@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { signIn, signUp, signOut } from '@/app/api/auth/route';
+import { signIn, signUp, signOut, getLoggedInUser } from '@/app/api/auth/route';
 import { useRouter } from 'next/navigation';
 
 type User = {
@@ -47,10 +47,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  useEffect(()=> {
+
+    const getUserDetails = async () => {
+      const result = await getLoggedInUser()
+      console.log("[AuthProvider] triggered user details with result:", result)
+
+      if (result?.success) {
+        setUser(result.data)
+      }
+
+    }
+
+    getUserDetails()
+
+
+  }, [])
 
   const handleSignIn = async (data: SignInUser) => {
     setLoading(true);
@@ -97,14 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("[AuthProvider] result:", result)
       setUser(undefined)
       router.push("/")
-
-      // commented out because result could never be success, not sure if frontend/backend bug
-      // if (result.success) {
-      //   setUser(undefined);
-      //   router.push('/');
-      // } else {
-      //   console.error('Sign out failed:', result.error);
-      // }
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
