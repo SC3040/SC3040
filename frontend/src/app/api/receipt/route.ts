@@ -139,6 +139,41 @@ export async function confirmReceiptServerAction(confirmedData: ReceiptResponse)
     }
 }
 
+export async function updateReceiptServerAction(updatedData: ReceiptResponse): Promise<ReceiptResponse> {
+
+    const token = cookies().get('jwt')?.value;
+    if (!token) {
+        console.log("[updateReceiptServerAction] No JWT token found in cookies")
+        throw new Error("Not authorized. JWT cookie missing or invalid.")
+    }
+
+    try {
+
+        const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/${updatedData.id}`, {
+            method: "PUT",
+            headers: {
+                'Cookie': `jwt=${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+        })
+
+        if (!response.ok) {
+            throw new Error("Error in updating receipt data")
+        }
+
+        const data = await response.json();
+
+        return data;
+        
+
+    } catch (err){
+        console.log("[updateReceiptServerAction] error: ", err)
+        throw err
+    }
+
+}
+
 export async function uploadReceiptServerAction(formData: FormData): Promise<ReceiptResponse> {
     const token = cookies().get('jwt')?.value;
 

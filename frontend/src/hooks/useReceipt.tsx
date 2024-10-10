@@ -1,61 +1,73 @@
-'use client'
-
 import { useState } from 'react';
-import { uploadReceiptServerAction, confirmReceiptServerAction, getAllReceiptsServerAction, ReceiptResponse } from '@/app/api/receipt/route';
+import { getAllReceiptsServerAction, confirmReceiptServerAction, uploadReceiptServerAction, updateReceiptServerAction } from '@/app/api/receipt/route';
+import { ReceiptResponse } from '@/app/api/receipt/route';
 
 export function useReceipt() {
-    const [isUploading, setIsUploading] = useState<boolean>(false);
-    const [isConfirming, setIsConfirming] = useState<boolean>(false);
-    const [isGetting, setIsGetting] = useState<boolean>(false)
-    const [error, setError] = useState<string | null>(null);
+    const [isGetting, setIsGetting] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    const uploadReceipt = async (file: File) => {
-        setIsUploading(true);
-        setError(null);
-    
-        const formData = new FormData();
-        formData.append('image', file, file.name);
-    
-        try {
-            const data = await uploadReceiptServerAction(formData);
-            return data;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-            throw err;
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const confirmReceipt = async (receiptData: ReceiptResponse) => {
-        setIsConfirming(true);
-        setError(null);
-
-        try {
-            const success = await confirmReceiptServerAction(receiptData);
-            return success;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-            throw err;
-        } finally {
-            setIsConfirming(false);
-        }
-    };
-
-    const getAllReceipts = async () => {
+    const getAllReceipts = async (): Promise<ReceiptResponse[]> => {
         setIsGetting(true);
-        setError(null);
-
         try {
             const data = await getAllReceiptsServerAction();
             return data;
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
-            throw err;
+        } catch (error) {
+            console.error('Error getting all receipts:', error);
+            throw error;
         } finally {
             setIsGetting(false);
         }
     };
 
-    return { uploadReceipt, confirmReceipt, getAllReceipts, isUploading, isConfirming, isGetting, error };
+    const confirmReceipt = async (confirmedData: ReceiptResponse): Promise<boolean> => {
+        setIsConfirming(true);
+        try {
+            const result = await confirmReceiptServerAction(confirmedData);
+            return result;
+        } catch (error) {
+            console.error('Error confirming receipt:', error);
+            throw error;
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+
+    const uploadReceipt = async (formData: FormData): Promise<ReceiptResponse> => {
+        setIsUploading(true);
+        try {
+            const data = await uploadReceiptServerAction(formData);
+            return data;
+        } catch (error) {
+            console.error('Error uploading receipt:', error);
+            throw error;
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const updateReceipt = async (updatedData: ReceiptResponse): Promise<ReceiptResponse> => {
+        setIsUpdating(true);
+        try {
+            const updatedReceipt = await updateReceiptServerAction(updatedData)
+            return updatedReceipt;
+        } catch (error) {
+            console.error('Error updating receipt:', error);
+            throw error;
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    return {
+        getAllReceipts,
+        confirmReceipt,
+        uploadReceipt,
+        updateReceipt,
+        isGetting,
+        isConfirming,
+        isUploading,
+        isUpdating,
+    };
 }
