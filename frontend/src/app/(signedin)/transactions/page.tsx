@@ -1,16 +1,20 @@
 "use client"
-import { ColumnDef } from "@tanstack/react-table"
+import { useEffect, useState, useCallback } from 'react'
 import DataTable from "@/components/table/TransactionTable"
-import { columns } from "@/components/table/transactionCols"
-import { useEffect, useState } from 'react'
+import { createColumns, ReceiptResponse } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
-import { ReceiptResponse } from "@/app/api/receipt/route";
 import { EditReceiptPopup } from "@/components/shared/EditReceiptPopup";
 
 export default function TransactionHomePage() {
     const { getAllReceipts, updateReceipt, isGetting } = useReceipt();
     const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([]);
     const [editingReceipt, setEditingReceipt] = useState<ReceiptResponse | null>(null);
+
+    const handleEditReceipt = useCallback((receipt: ReceiptResponse) => {
+        setEditingReceipt(receipt);
+    }, []);
+
+    const columns = createColumns(handleEditReceipt);
 
     useEffect(() => {
         const fetchReceipts = async () => {
@@ -23,10 +27,6 @@ export default function TransactionHomePage() {
         }
         fetchReceipts()
     }, []) 
-
-    const handleEditReceipt = (receipt: ReceiptResponse) => {
-        setEditingReceipt(receipt);
-    };
 
     const handleCloseEditPopup = () => {
         setEditingReceipt(null);
@@ -41,26 +41,17 @@ export default function TransactionHomePage() {
                     receipt.id === updatedReceipt.id ? updatedReceipt : receipt
                 )
             );
+            handleCloseEditPopup();
         } catch (error) {
             console.error("Error updating receipt:", error);
         }
     };
 
-    const updatedColumns : ColumnDef<ReceiptResponse>[]= [
-        ...columns,
-        {
-            id: "edit",
-            cell: ({ row }) => (
-                <button onClick={() => handleEditReceipt(row.original)}>Edit</button>
-            ),
-        },
-    ];
-
     return (
         <div className="flex min-h-screen flex-col items-center justify-start">
             <h1>Transactions</h1>
 
-            <DataTable columns={updatedColumns} data={receiptData} />
+            <DataTable columns={columns} data={receiptData} displayRows={10}/>
 
             {editingReceipt && (
                 <EditReceiptPopup

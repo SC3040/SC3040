@@ -10,6 +10,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+export enum Category {
+  TRANSPORT = 'Transport',
+  CLOTHING = 'Clothing',
+  HEALTHCARE = 'Healthcare',
+  FOOD = 'Food',
+  LEISURE = 'Leisure',
+  HOUSING = 'Housing',
+  OTHERS = 'Others',
+}
+
 type ReceiptItem = {
   itemName: string;
   itemQuantity: number;
@@ -21,12 +31,12 @@ export type ReceiptResponse = {
   merchantName: string;
   date: string;
   totalCost: string;
-  category: string;
+  category: Category;
   itemizedList: ReceiptItem[];
   image: string;
 }
 
-export const columns: ColumnDef<ReceiptResponse>[] = [
+export const createColumns = (onEdit?: (receipt: ReceiptResponse) => void): ColumnDef<ReceiptResponse>[] => [
   {
     accessorKey: "date",
     header: ({ column }) => {
@@ -100,11 +110,11 @@ export const columns: ColumnDef<ReceiptResponse>[] = [
               Copy receipt date
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {}} // TODO: View details feature
+            {onEdit && <DropdownMenuItem
+              onClick={() => onEdit(receipt)}
             >
-              View Details
-            </DropdownMenuItem>
+              Edit Receipt
+            </DropdownMenuItem>}
             <DropdownMenuItem
               onClick={() => {}} // TODO: delete feature
             >

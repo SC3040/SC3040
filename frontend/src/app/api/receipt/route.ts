@@ -1,22 +1,8 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { ReceiptResponse, Category } from "@/components/table/transactionCols";
 
-type ReceiptItem = {
-    itemName: string;
-    itemQuantity: number;
-    itemCost: string;
-}
-
-export type ReceiptResponse = {
-    id: string;
-    merchantName: string;
-    date: string;
-    totalCost: string;
-    category: string;
-    itemizedList: ReceiptItem[];
-    image: string;
-}
 
 // Helper function to safely log FormData contents
 function logFormData(formData: FormData) {

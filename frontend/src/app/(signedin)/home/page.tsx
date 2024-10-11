@@ -5,14 +5,12 @@ import { useEffect, useState } from 'react'
 import LineChartC from '@/components/charts/linechart'
 import BarChartC from '@/components/charts/barchart'
 import TableC from '@/components/table/TableC'
-import { columns } from "@/components/table/transactionCols"
+import { createColumns, ReceiptResponse } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
-import { ReceiptResponse } from "@/app/api/receipt/route";
 
 const HomePage = () => {
 
     const { user } = useAuth();
-
     const { getAllReceipts, isGetting} = useReceipt();
     const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([])
     useEffect(() => {
@@ -26,6 +24,8 @@ const HomePage = () => {
         }
         fetchReceipts()
     }, []) 
+
+    const columns = createColumns();
 
     return (
         <div className="flex_col_center w-full gap-4">
