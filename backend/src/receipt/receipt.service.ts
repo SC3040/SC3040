@@ -99,9 +99,10 @@ export class ReceiptService {
     receiptId: string,
     updateReceiptDto: UpdateReceiptDto,
   ): Promise<ReceiptResponseDto> {
+    this.logger.log('Received request to update receiptId:', receiptId);
     const receipt = await this.receiptModel.findById(receiptId);
 
-    if (!receipt || receipt.userId !== userId) {
+    if (!receipt || receipt.userId !== userId.toString()) {
       throw new HttpException(
         'Receipt not found or not owned by the user',
         HttpStatus.NOT_FOUND,
