@@ -9,7 +9,7 @@ import { useReceipt } from '@/hooks/useReceipt';
 import { useToast } from "@/components/ui/use-toast"
 import { ReceiptResponse } from '@/app/api/receipt/route';
 
-const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg'] as const;
+const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 type AllowedFileType = typeof ALLOWED_FILE_TYPES[number];

@@ -45,11 +45,13 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  displayRows: number
 }
 
 export default function DataTable<TData, TValue>({
   columns,
   data,
+  displayRows = 10,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -68,7 +70,17 @@ export default function DataTable<TData, TValue>({
       sorting,
       columnFilters,
       columnVisibility,
+      pagination: {
+        pageIndex: 0,
+        pageSize: displayRows
+      }
     },
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 0
+      }
+    }
   })
 
   useEffect(() => {
@@ -89,10 +101,10 @@ export default function DataTable<TData, TValue>({
     <div>
         <div className="flex items-center py-4">
         <Input
-          placeholder="Filter desc..."
-          value={(table.getColumn("desc")?.getFilterValue() as string) ?? ""}
+          placeholder="Search Merchant..."
+          value={(table.getColumn("merchantName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("desc")?.setFilterValue(event.target.value)
+            table.getColumn("merchantName")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />

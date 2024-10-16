@@ -128,7 +128,7 @@ export async function signOut() {
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/logout`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${jwt?.value}`,
+        'Cookie': `jwt=${jwt?.value}`,
         'Content-Type': 'application/json'
       },
     });
@@ -149,5 +149,30 @@ export async function signOut() {
   } catch (error) {
     console.error('Sign out error:', error);
     return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+export async function getLoggedInUser() {
+  try {
+    const jwt = cookies().get('jwt');
+    console.log(`[Auth Route] getLoggedInUser, jwt token: ${jwt?.value}`)
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/users`, {
+      method: 'GET',
+      headers: {
+        'Cookie': `jwt=${jwt?.value}`,
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return { success: true, data}
+    } else {
+      return { success: false, data}
+    }
+
+  } catch (error) {
+    console.log(`[Auth Route] Error in getting logged in user details: ${error}`)
   }
 }

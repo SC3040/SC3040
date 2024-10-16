@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { encrypt, decrypt } from '@/lib/encryptions';
 
 type ApiTokenResponse = {
   defaultModel: string;

@@ -1,20 +1,21 @@
 "use client"
-
+import { useEffect, useState, useCallback } from 'react'
 import DataTable from "@/components/table/TransactionTable"
-import { columns } from "@/components/table/transactionCols"
-import { useEffect, useState } from 'react'
-import { useFetchTransactions } from "@/hooks/useFetchTransactions";
+import { createColumns, ReceiptResponse } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
-import { ReceiptResponse } from "@/app/api/receipt/route";
+import { EditReceiptPopup } from "@/components/shared/EditReceiptPopup";
 
 export default function TransactionHomePage() {
+    const { getAllReceipts, updateReceipt, isGetting } = useReceipt();
+    const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([]);
+    const [editingReceipt, setEditingReceipt] = useState<ReceiptResponse | null>(null);
 
-    // TODO: add userID
-    const userID : string = "HARDCODE"
-    const { isLoading, error, transactions } = useFetchTransactions(userID);
+    const handleEditReceipt = useCallback((receipt: ReceiptResponse) => {
+        setEditingReceipt(receipt);
+    }, []);
 
-    const { getAllReceipts, isGetting} = useReceipt();
-    const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([])
+    const columns = createColumns(handleEditReceipt);
+
     useEffect(() => {
         const fetchReceipts = async () => {
             try {
@@ -24,18 +25,42 @@ export default function TransactionHomePage() {
                 console.error("Error fetching receipts:", error)
             }
         }
-        console.log("[transactions page] receiptData:")
-        console.log(receiptData);
         fetchReceipts()
     }, []) 
 
+    const handleCloseEditPopup = () => {
+        setEditingReceipt(null);
+    };
+
+    const handleSaveReceipt = async (updatedReceipt: ReceiptResponse) => {
+        try {
+            await updateReceipt(updatedReceipt);
+            
+            setReceiptData(prevData =>
+                prevData.map(receipt =>
+                    receipt.id === updatedReceipt.id ? updatedReceipt : receipt
+                )
+            );
+            handleCloseEditPopup();
+        } catch (error) {
+            console.error("Error updating receipt:", error);
+        }
+    };
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-start">
             <h1>Transactions</h1>
 
-            {/* <DataTable columns={columns} data={transactions}/> */}
+            <DataTable columns={columns} data={receiptData} displayRows={10}/>
 
+            {editingReceipt && (
+                <EditReceiptPopup
+                    receipt={editingReceipt}
+                    isOpen={!!editingReceipt}
+                    onClose={handleCloseEditPopup}
+                    onSave={handleSaveReceipt}
+                />
+            )}
         </div>
     )
 }
