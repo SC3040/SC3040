@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { useReceipt } from '@/hooks/useReceipt';
 import { useToast } from "@/components/ui/use-toast"
-import { ReceiptResponse } from '@/app/api/receipt/route';
+import { ReceiptResponse } from "@/components/table/transactionCols"
 
 const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -63,7 +63,10 @@ const ReceiptImagePage: React.FC = () => {
             return;
         }
         try {
-            const data = await uploadReceipt(file);
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const data = await uploadReceipt(formData);
             setReceiptData(data);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
@@ -81,6 +84,7 @@ const ReceiptImagePage: React.FC = () => {
             });
         }
     };
+
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>, field: keyof ReceiptResponse) => {
         if (receiptData) {
@@ -149,7 +153,7 @@ const ReceiptImagePage: React.FC = () => {
 
                 {error && (
                     <Alert variant="destructive" className="mb-4">
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription>{error.message}</AlertDescription>
                     </Alert>
                 )}
 
