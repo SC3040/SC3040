@@ -20,7 +20,7 @@ export enum Category {
   OTHERS = 'Others',
 }
 
-type ReceiptItem = {
+export type ReceiptItem = {
   itemName: string;
   itemQuantity: number;
   itemCost: string;

@@ -1,13 +1,14 @@
 "use client"
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { useReceipt } from '@/hooks/useReceipt';
 import { useToast } from "@/components/ui/use-toast"
-import { ReceiptResponse } from "@/components/table/transactionCols"
+import { ReceiptResponse, Category, ReceiptItem } from "@/components/table/transactionCols"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'] as const;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -20,11 +21,23 @@ const ReceiptImagePage: React.FC = () => {
     const [preview, setPreview] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { uploadReceipt, confirmReceipt, isUploading, isConfirming, error } = useReceipt();
-    const [receiptData, setReceiptData] = useState<ReceiptResponse | null>(null);
+    const [formTouched, setFormTouched] = useState(false);
+    const [receiptData, setReceiptData] = useState<Omit<ReceiptResponse, 'id'>>({
+        merchantName: '',
+        date: '',
+        totalCost: '',
+        category: Category.OTHERS,
+        itemizedList: [],
+        image: ''
+    });
+
+    useEffect(() => {
+        console.log("[Upload Page.tsx] Receipt data state updated:", receiptData);
+    }, [receiptData]);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0];
-
+    
         if (selectedFile) {
             if (!ALLOWED_FILE_TYPES.includes(selectedFile.type as AllowedFileType)) {
                 toast({
@@ -34,7 +47,7 @@ const ReceiptImagePage: React.FC = () => {
                 });
                 return;
             }
-
+    
             if (selectedFile.size > MAX_FILE_SIZE) {
                 toast({
                     variant: "destructive",
@@ -43,17 +56,37 @@ const ReceiptImagePage: React.FC = () => {
                 });
                 return;
             }
-
+    
             setFile(selectedFile);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreview(reader.result as string);
+                setReceiptData(prev => ({ 
+                    ...prev, 
+                    image: reader.result as string,
+                    merchantName: '',
+                    date: '',
+                    totalCost: '',
+                    category: Category.OTHERS,
+                    itemizedList: []
+                }));
             };
             reader.readAsDataURL(selectedFile);
+            
+            // Reset form touched state
+            setFormTouched(false);
         }
     };
 
+
+    // Helper function to parse category string into enum
+    function parseCategory(category: string): Category {
+        const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+        return (Category as any)[normalizedCategory] || Category.OTHERS;
+    }
+
     const handleUpload = async () => {
+        setFormTouched(false);
         if (!file) {
             toast({
                 variant: "destructive",
@@ -66,17 +99,35 @@ const ReceiptImagePage: React.FC = () => {
             const formData = new FormData();
             formData.append('image', file);
             
+            console.log("[Upload Page.tsx] Uploading receipt...");
             const data = await uploadReceipt(formData);
-            setReceiptData(data);
+            console.log("[Upload Page.tsx] Received data from server:", data);
+    
+            // Clean up data
+            const cleanedData: ReceiptResponse = {
+                ...data,
+                itemizedList: data.itemizedList.map(item => ({
+                    ...item,
+                    itemQuantity: item.itemQuantity || 1
+                })),
+                category: parseCategory(data.category)
+            };
+    
+            console.log("[Upload Page.tsx] cleanedData: ", cleanedData);
+    
+            setReceiptData(cleanedData);
+            console.log("State updated with new receipt data");
+    
+            // Clear the file input
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
-
+    
             toast({
-                title: "Receipt Uploaded Successfully!",
+                title: "Receipt Data Extracted Successfully!",
             });
         } catch (err) {
-            console.log("Error in uploading receipt:", err);
+            console.error("Error in uploading receipt:", err);
             toast({
                 variant: "destructive",
                 title: "Upload Failed",
@@ -85,31 +136,61 @@ const ReceiptImagePage: React.FC = () => {
         }
     };
 
-
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>, field: keyof ReceiptResponse) => {
-        if (receiptData) {
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>, field: keyof Omit<ReceiptResponse, 'id' | 'category' | 'itemizedList'>) => {
+        if (formTouched) {
             setReceiptData({ ...receiptData, [field]: e.target.value });
         }
     };
+    
+    const handleCategoryChange = (value: Category) => {
+        if (formTouched) {
+            setReceiptData({ ...receiptData, category: value });
+        }
+    };
 
-    const handleItemizedListChange = (index: number, field: keyof ReceiptResponse['itemizedList'][0], value: string) => {
-        if (receiptData) {
+    const handleInputFocus = () => {
+        setFormTouched(true);
+    };
+    
+    const handleItemizedListChange = (index: number, field: keyof ReceiptItem, value: string) => {
+        if (formTouched) {
             const newItemizedList = [...receiptData.itemizedList];
-            newItemizedList[index] = { ...newItemizedList[index], [field]: value };
+            newItemizedList[index] = { 
+                ...newItemizedList[index], 
+                [field]: field === 'itemQuantity' ? parseInt(value, 10) : value 
+            };
             setReceiptData({ ...receiptData, itemizedList: newItemizedList });
         }
     };
 
-    const handleSubmit = async () => {
-        if (!receiptData) return;
+    const handleAddItem = () => {
+        setReceiptData({
+            ...receiptData,
+            itemizedList: [...receiptData.itemizedList, { itemName: '', itemQuantity: 0, itemCost: '' }]
+        });
+    };
 
+    const handleRemoveItem = (index: number) => {
+        const newItemizedList = receiptData.itemizedList.filter((_, i) => i !== index);
+        setReceiptData({ ...receiptData, itemizedList: newItemizedList });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
-            const success = await confirmReceipt(receiptData);
+            const success = await confirmReceipt(receiptData as ReceiptResponse);
             if (success) {
                 toast({
                     title: "Receipt Created Successfully!",
                 });
-                setReceiptData(null);
+                setReceiptData({
+                    merchantName: '',
+                    date: '',
+                    totalCost: '',
+                    category: Category.OTHERS,
+                    itemizedList: [],
+                    image: ''
+                });
                 setFile(null);
                 setPreview('');
             } else {
@@ -126,10 +207,11 @@ const ReceiptImagePage: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-            <div className="md:w-1/2">
-                <h1 className="text-2xl font-bold mb-4">Upload Receipt Image</h1>
-
+        <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold mb-4">Create Receipt</h1>
+            
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-2">Upload Receipt Image (Optional)</h2>
                 <Input
                     type="file"
                     accept={ALLOWED_FILE_TYPES.join(',')}
@@ -160,75 +242,87 @@ const ReceiptImagePage: React.FC = () => {
                 {preview && (
                     <div className="mb-4">
                         <img src={preview} alt="Preview" className="max-w-full h-auto rounded-lg mb-2 border border-input" />
-                        <label htmlFor="file-upload" className="cursor-pointer block">
-                            <Button variant="outline" className="w-full">
-                                <ImageIcon className="mr-2 h-4 w-4" />
-                                Change Image
+                        <div className="flex gap-2">
+                            <label htmlFor="file-upload" className="cursor-pointer block flex-1">
+                                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                    Change Image
+                                </Button>
+                            </label>
+                            <Button onClick={handleUpload} disabled={!file || isUploading} className="flex-1">
+                                {isUploading ? 'Extracting...' : 'Extract Data'}
                             </Button>
-                        </label>
+                        </div>
                     </div>
                 )}
-
-                <Button onClick={handleUpload} disabled={!file || isUploading} className="w-full">
-                    {isUploading ? 'Uploading...' : 'Upload Receipt'}
-                </Button>
             </div>
-
-            {receiptData && (
-                <div className="md:w-1/2">
-                    <h2 className="text-xl font-bold mb-4">Confirm Receipt Details</h2>
-                    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
+                
+                <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                    value={receiptData.merchantName}
+                    onChange={(e) => handleInputChange(e, 'merchantName')}
+                    onFocus={handleInputFocus}
+                    placeholder="Merchant Name"
+                />
+                <Input
+                    type="date"
+                    value={receiptData.date}
+                    onChange={(e) => handleInputChange(e, 'date')}
+                    onFocus={handleInputFocus}
+                />
+                <Input
+                    type="number"
+                    value={receiptData.totalCost}
+                    onChange={(e) => handleInputChange(e, 'totalCost')}
+                    onFocus={handleInputFocus}
+                    placeholder="Total Cost"
+                    step="0.01"
+                />
+                <Select value={receiptData.category} onValueChange={handleCategoryChange}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.values(Category).map((category) => (
+                            <SelectItem key={category} value={category}>
+                                {category}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <h3 className="font-semibold">Itemized List</h3>
+                {receiptData.itemizedList.map((item, index) => (
+                    <div key={`receiptData_i${index}`} className="space-y-2">
                         <Input
-                            value={receiptData.merchantName}
-                            onChange={(e) => handleInputChange(e, 'merchantName')}
-                            placeholder="Merchant Name"
-                        />
-                        <Input
-                            type="date"
-                            value={receiptData.date}
-                            onChange={(e) => handleInputChange(e, 'date')}
+                            value={item.itemName}
+                            onChange={(e) => handleItemizedListChange(index, 'itemName', e.target.value)}
+                            placeholder="Item Name"
                         />
                         <Input
                             type="number"
-                            value={receiptData.totalCost}
-                            onChange={(e) => handleInputChange(e, 'totalCost')}
-                            placeholder="Total Cost"
-                            step="0.01"
+                            value={item.itemQuantity}
+                            onChange={(e) => handleItemizedListChange(index, 'itemQuantity', e.target.value)}
+                            placeholder="Quantity"
                         />
                         <Input
-                            value={receiptData.category}
-                            onChange={(e) => handleInputChange(e, 'category')}
-                            placeholder="Category"
+                            type="number"
+                            value={item.itemCost}
+                            onChange={(e) => handleItemizedListChange(index, 'itemCost', e.target.value)}
+                            placeholder="Item Cost"
+                            step="0.01"
                         />
-                        <h3 className="font-semibold">Itemized List</h3>
-                        {receiptData.itemizedList.map((item, index) => (
-                            <div key={index} className="space-y-2">
-                                <Input
-                                    value={item.itemName}
-                                    onChange={(e) => handleItemizedListChange(index, 'itemName', e.target.value)}
-                                    placeholder="Item Name"
-                                />
-                                <Input
-                                    type="number"
-                                    value={item.itemQuantity}
-                                    onChange={(e) => handleItemizedListChange(index, 'itemQuantity', e.target.value)}
-                                    placeholder="Quantity"
-                                />
-                                <Input
-                                    type="number"
-                                    value={item.itemCost}
-                                    onChange={(e) => handleItemizedListChange(index, 'itemCost', e.target.value)}
-                                    placeholder="Item Cost"
-                                    step="0.01"
-                                />
-                            </div>
-                        ))}
-                        <Button type="submit" disabled={isConfirming} className="w-full">
-                            {isConfirming ? 'Confirming...' : 'Confirm Receipt'}
+                        <Button type="button" onClick={() => handleRemoveItem(index)} variant="destructive">
+                            Remove Item
                         </Button>
-                    </form>
-                </div>
-            )}
+                    </div>
+                ))}
+                <Button type="button" onClick={handleAddItem} variant="outline">
+                    Add Item
+                </Button>
+                <Button type="submit" disabled={isConfirming} className="w-full">
+                    {isConfirming ? 'Creating Receipt...' : 'Create Receipt'}
+                </Button>
+            </form>
         </div>
     );
 };

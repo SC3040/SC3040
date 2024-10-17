@@ -7,7 +7,7 @@ export default function ReceiptHomePage() {
 
             <div>
                 <Link href="/receipt/image">Upload Receipt Image</Link>
-                <Link href="/receipt/custom">Enter Receipt Details</Link>
+                <Link href="/receipt/custom">Receipt Details</Link>
             </div>
 
         </div>
