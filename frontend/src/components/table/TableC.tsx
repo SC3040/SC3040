@@ -25,7 +25,7 @@ return (
         <CardDescription>Your recent receipt data by date</CardDescription>
       </CardHeader>
       <CardContent>
-            <DataTable columns={columns} data={data} displayRows={5}/>
+            <DataTable columns={columns} data={data} displayRows={displayRows}/>
       </CardContent>
     </Card>
 )
