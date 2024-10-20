@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from 'react';
 import { getAllReceiptsServerAction, confirmReceiptServerAction, uploadReceiptServerAction, updateReceiptServerAction } from '@/app/api/receipt/route';
 import { ReceiptResponse } from "@/components/table/transactionCols"
