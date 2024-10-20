@@ -137,4 +137,17 @@ export class ReceiptController {
     this.logger.log('Extracted user ID from decorator:', userId);
     return this.receiptService.getReceiptsByUser(userId);
   }
+
+  @Get('review')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user transaction review.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction review retrieved successfully.',
+    type: String,
+  })
+  @HttpCode(200)
+  async getTransactionReview(@User('_id') userId: string): Promise<string> {
+    return this.receiptService.getTransactionReview(userId);
+  }
 }
