@@ -138,9 +138,9 @@ export class ReceiptController {
     return this.receiptService.getReceiptsByUser(userId);
   }
 
-  @Get()
+  @Get('review')
   @ApiBearerAuth()
-  @ApiOperation({ summary: `Get user's transaction review.` })
+  @ApiOperation({ summary: 'Get user transaction review.' })
   @ApiResponse({
     status: 200,
     description: 'Transaction review retrieved successfully.',
