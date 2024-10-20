@@ -7,7 +7,7 @@
     "$date": "2024-09-21T00:00:00.000Z"
   },
   "totalCost": 633,
-  "category": "FOOD",
+  "category": "Food",
   "itemizedList": [
     {
       "itemName": "BFL-CHANT1",
@@ -82,7 +82,7 @@
     "$date": "2024-09-22T00:00:00.000Z"
   },
   "totalCost": 58,
-  "category": "FOOD",
+  "category": "Food",
   "itemizedList": [
     {
       "itemName": "French Toast",
@@ -132,7 +132,7 @@
     "$date": "2024-09-22T00:00:00.000Z"
   },
   "totalCost": 10,
-  "category": "FOOD",
+  "category": "Food",
   "itemizedList": [
     {
       "itemName": "Porky Burger",
