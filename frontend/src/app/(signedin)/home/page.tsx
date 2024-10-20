@@ -7,6 +7,7 @@ import BarChartC from '@/components/charts/barchart'
 import TableC from '@/components/table/TableC'
 import { createColumns, ReceiptResponse } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
+import AIAnalysis from '@/components/shared/AIAnalysis'
 
 const HomePage = () => {
 
@@ -23,9 +24,11 @@ const HomePage = () => {
             }
         }
         fetchReceipts()
-    }, []) 
+    }, []);
 
     const columns = createColumns();
+
+    console.log("[Home page.tsx] user obj: ", user);
 
     return (
         <div className="flex_col_center w-full gap-4">
@@ -33,6 +36,10 @@ const HomePage = () => {
             <div className="flex justify-between items-center w-1/2">
                 <p>User ID: {user?.id}</p>
                 <p>User email: {user?.email}</p>
+            </div>
+
+            <div className="w-full flex_center">
+                <AIAnalysis />
             </div>
 
             <div className="w-full">

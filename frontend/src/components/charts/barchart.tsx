@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReceiptResponse } from "@/app/api/receipt/route";
+import { ReceiptResponse } from "@/components/table/transactionCols";
 
 interface ChartDataPoint {
   category: string;
@@ -45,7 +45,7 @@ export default function BarChartC({ data }: BarChartCProps): JSX.Element {
               formatter={(value: number) => `$${value.toFixed(2)}`}
               labelFormatter={(label: string) => `Category: ${label}`}
             />
-            <Bar dataKey="total" fill="#82ca9d" />
+            <Bar dataKey="total" fill="#89ca9d" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

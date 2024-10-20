@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReceiptResponse } from "@/app/api/receipt/route";
+import { ReceiptResponse } from "@/components/table/transactionCols"
 
 interface ChartDataPoint {
   monthYear: string;
