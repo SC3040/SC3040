@@ -23,8 +23,9 @@ const AIAnalysis: React.FC = () => {
   return (
     <Card className="w-full bg-transparent">
       <CardHeader>
-        <CardTitle>AI Insights ✨</CardTitle>
-        <CardDescription>Get AI-powered insights about your spending!</CardDescription>
+        <CardTitle>
+                AI Insights
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
 
@@ -37,13 +38,13 @@ const AIAnalysis: React.FC = () => {
         <form onSubmit={handleUserPromptSubmit} className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Or enter your own prompt here..."
+              placeholder="Can you provide some insights into my spending habits..."
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
               className="flex-grow"
             />
             <Button type="submit" disabled={loading || !userPrompt}>
-              Submit
+              Ask AI ✨
             </Button>
           </div>
         </form>
