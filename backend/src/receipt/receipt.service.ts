@@ -158,35 +158,64 @@ export class ReceiptService {
     return receipts.map((receipt) => this.buildReceiptResponse(receipt));
   }
 
+  // Get transaction review for a user
+  @TrackErrors
+  async getTransactionReview(userId: string): Promise<string> {
+    // Get all receipts for the user
+    const receipts = await this.receiptModel.find({ userId });
+
+    // Get the API keys
+    const { model, geminiKey, openaiKey } = await this.getApiKeys(userId);
+
+    // Prepare data to send to Flask
+    const apiKeys = {
+      defaultModel: model,
+      geminiKey: geminiKey,
+      openaiKey: openaiKey,
+    };
+
+    const receiptsData = receipts.map((receipt) =>
+      this.buildReceiptResponse(receipt),
+    );
+
+    const data = {
+      apiKeys: apiKeys,
+      receipts: receiptsData,
+    };
+
+    this.logger.log('Fetching transaction review for user:', userId);
+    try {
+      const response = await axios.post(
+        'http://receipt-service:8081/review',
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data.toString();
+    } catch (error) {
+      this.logger.error(
+        'Error fetching transaction review from Flask',
+        error.message,
+      );
+      this.logger.error('Full error stack:', error.stack);
+
+      throw new HttpException(
+        'Transaction review failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   private async processReceiptWithFlask(
     userId: string, // Add userId parameter
     image: Express.Multer.File,
   ): Promise<any> {
     // Fetch the user's API token information
-    const user = await this.userService.findEntityById(userId);
-    if (!user || !user.apiToken) {
-      throw new HttpException(
-        'User or API token not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    // Determine model and API key
-    const model = user.apiToken.defaultModel;
-    let geminiKey: string, openaiKey: string;
-
-    try {
-      ({ geminiKey, openaiKey } = this.userService.getDecryptedApiKey(
-        user,
-        model,
-      ));
-      // this.logger.log(`geminiKey: ${geminiKey}, openaiKey: ${openaiKey}`);
-    } catch (error) {
-      throw new HttpException(
-        `API key not set for the selected model: ${error.message}`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const { model, geminiKey, openaiKey } = await this.getApiKeys(userId);
 
     try {
       const formData = new FormData();
@@ -224,6 +253,38 @@ export class ReceiptService {
     }
   }
 
+  // Utility function to handle getting API keys
+  private async getApiKeys(userId: string): Promise<{
+    model: string;
+    geminiKey: string;
+    openaiKey: string;
+  }> {
+    const user = await this.userService.findEntityById(userId);
+    if (!user || !user.apiToken) {
+      throw new HttpException(
+        'User or API token not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const model = user.apiToken.defaultModel;
+    let geminiKey: string, openaiKey: string;
+
+    try {
+      ({ geminiKey, openaiKey } = this.userService.getDecryptedApiKey(
+        user,
+        model,
+      ));
+    } catch (error) {
+      throw new HttpException(
+        `API key not set for the selected model: ${error.message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return { model, geminiKey, openaiKey };
+  }
+
   // Utility function to handle both date formats
   private parseDate(dateString: string): Date | null {
     // Try to parse the ISO date format first
@@ -243,12 +304,11 @@ export class ReceiptService {
 
   // Build receipt response DTO
   private buildReceiptResponse(receipt: ReceiptDocument): ReceiptResponseDto {
-    const { _id, image, ...rest } = receipt.toObject({ versionKey: false });
+    const { _id, ...rest } = receipt.toObject({ versionKey: false });
 
     return {
       id: _id, // Add the 'id' field with the value of '_id'
-      ...rest, // Spread all other fields except _id and image
-      image: image?.toString('base64'), // Convert image buffer to base64 if exists
+      ...rest, // Spread all other fields
     };
   }
 }
