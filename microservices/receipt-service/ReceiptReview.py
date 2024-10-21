@@ -25,9 +25,11 @@ The insights response must be formatted as:
     insights: if status is True, return string containing the insights generated from the spending data. If status is False, return 'None'.
     
 Please always give some insights, even if the data is not enough to generate a meaningful insight. General insights are also acceptable.
+Please do not mention about lack of spending data, General insights are also acceptable.
 """.strip()
         self.system_instruction = """You are an AI language model tasked with generating insights given the spending data of the user.
-Please always give some insights, even if the data is not enough to generate a meaningful insight. General insights are also acceptable.""".strip()
+Please always give some insights, even if the data is not enough to generate a meaningful insight. General insights are also acceptable.
+Please do not mention about lack of spending data, General insights are also acceptable.""".strip()
         self.error_response = """Missing insight in response. Please always give some insights, even if the data is not enough to generate a meaningful insight. General insights are also acceptable.""".strip()
 
     @abstractmethod
