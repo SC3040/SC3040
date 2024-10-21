@@ -12,6 +12,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { ReporterModule } from './reporter/reporter.module';
 import { RequestTimingMiddleware } from './metrics/request-timing.middleware';
 import { ErrorTrackingMiddleware } from './metrics/error-tracking.middleware'; // Import the middleware
+import { RequestConcurrencyMiddleware } from './metrics/request-concurrency.middleware';
 
 @Module({
   imports: [
@@ -39,6 +40,10 @@ import { ErrorTrackingMiddleware } from './metrics/error-tracking.middleware'; /
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply RequestTimingMiddleware globally for all routes
+    consumer
+      .apply(RequestConcurrencyMiddleware)
+      .exclude({ path: '/metrics', method: RequestMethod.ALL })
+      .forRoutes('*');
     consumer
       .apply(RequestTimingMiddleware)
       .exclude({ path: '/metrics', method: RequestMethod.ALL })

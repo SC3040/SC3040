@@ -11,12 +11,12 @@ export class ReporterService {
     ReporterService.metricsService.incCounter(key, labels);
   }
 
-  static gauge(
-    key: string,
-    value: number,
-    labels?: Record<string, string | number>,
-  ): void {
-    ReporterService.metricsService.setGauge(key, value, labels);
+  static incGauge(key: string, labels?: Record<string, string | number>): void {
+    ReporterService.metricsService.incGauge(key, labels);
+  }
+
+  static decGauge(key: string, labels?: Record<string, string | number>): void {
+    ReporterService.metricsService.decGauge(key, labels);
   }
 
   static histogram(

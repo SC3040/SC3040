@@ -7,7 +7,7 @@ export class MetricsService {
   private readonly gauge: { [key: string]: Gauge<string> } = {};
   private readonly histograms: { [key: string]: Histogram<string> } = {};
 
-  constructor(@Inject(Registry) private readonly registry: Registry) {}
+  constructor(@Inject(Registry) private readonly registry: Registry) { }
 
   public incCounter(
     key: string,
@@ -24,11 +24,7 @@ export class MetricsService {
     this.counter[key].inc(labels);
   }
 
-  public setGauge(
-    key: string,
-    value: number,
-    labels?: Record<string, string | number>,
-  ): void {
+  public incGauge(key: string, labels?: Record<string, string | number>): void {
     if (!this.gauge[key]) {
       this.gauge[key] = new Gauge({
         name: key,
@@ -37,7 +33,13 @@ export class MetricsService {
         registers: [this.registry],
       });
     }
-    this.gauge[key].set(labels, value);
+    this.gauge[key].inc(labels);  // Increment the gauge
+  }
+
+  public decGauge(key: string, labels?: Record<string, string | number>): void {
+    if (this.gauge[key]) {
+      this.gauge[key].dec(labels);  // Decrement the gauge
+    }
   }
 
   public observeHistogram(

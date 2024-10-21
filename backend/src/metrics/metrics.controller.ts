@@ -5,7 +5,7 @@ import { Registry } from 'prom-client';
 @ApiTags('Metrics')
 @Controller('metrics')
 export class MetricsController {
-  constructor(@Inject(Registry) private readonly registry: Registry) {}
+  constructor(@Inject(Registry) private readonly registry: Registry) { }
 
   @Get()
   async getMetrics() {

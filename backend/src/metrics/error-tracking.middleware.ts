@@ -8,7 +8,7 @@ export class ErrorTrackingMiddleware implements NestMiddleware {
       if (res.statusCode === 500) {
         ReporterService.counter('http_500_error_count', {
           method: req.method,
-          route: req.route ? req.route.path : '',
+          path: req.originalUrl
         });
       }
     });

@@ -15,4 +15,4 @@ import { HealthCheckController } from './healthcheck.controller';
   controllers: [MetricsController, HealthCheckController],
   exports: [MetricsService],
 })
-export class MetricsModule {}
+export class MetricsModule { }
