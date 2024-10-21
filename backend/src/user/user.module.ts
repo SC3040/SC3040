@@ -18,10 +18,12 @@ import { UserSchema } from './schemas/user.schema';
 })
 export class UserModule {
   configure(consumer: MiddlewareConsumer) {
-    // no need for POST methods to be protected (register & login)
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        // no need for POST methods to be protected (register & login)
+        { path: 'users/register', method: RequestMethod.POST },
+        { path: 'users/login', method: RequestMethod.POST },
         { path: 'users/security-questions', method: RequestMethod.GET },
         { path: 'users/get-security-question', method: RequestMethod.GET },
       )
