@@ -87,10 +87,45 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "collectCoverage": true,
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/main.ts",
+      "!**/app.module.ts",
+      "!**/*.module.ts",
+      "!**/*.middleware.ts",
+      "!**/*.decorator.ts",
+      "!**/*.schema.ts",
+      "!**/*.enum.ts",
+      "!**/dto/**",
+      "!**/schemas/**",
+      "!**/types/**",
+      "!**/shared/**",
+      "!**/utils/**",
+      "!**/index.ts",
+      "!**/__mocks__/**"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/main.ts",
+      "/app.module.ts",
+      "/.*\\.module\\.ts$/",
+      "/.*\\.middleware\\.ts$/",
+      "/.*\\.decorator\\.ts$/",
+      "/.*\\.schema\\.ts$/",
+      "/.*\\.enum\\.ts$/",
+      "/dto/",
+      "/schemas/",
+      "/types/",
+      "/shared/",
+      "/utils/",
+      "/index.ts",
+      "/__mocks__/"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^argon2$": "<rootDir>/__mocks__/argon2.ts"
+    }
   }
 }
