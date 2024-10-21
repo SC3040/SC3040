@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from gemini import GeminiReceiptParser
+from gemini import GeminiReceiptParser, GeminiReceiptReview
 from Receipt import ReceiptEncoder
 from Exceptions import APIKeyError
 from gpt4o import OpenAIReceiptParser
@@ -20,6 +20,47 @@ def create_app():
     def allowed_file(filename):
         return '.' in filename and \
                filename.rsplit('.', 1)[1].lower() in VALID_IMAGE_EXTENSIONS
+
+    @app.route('/review', methods=['POST'])
+    def get_review():
+        data = request.json
+
+        default_model = data.get('apiKeys', {}).get('defaultModel')
+        gemini_api_key = data.get('apiKeys', {}).get('geminiKey')
+        openai_api_key = data.get('apiKeys', {}).get('openaiKey')
+        receipts = data.get('receipts')
+
+        # Check if everything is received
+        if not default_model:
+            return jsonify({'error': 'Missing defaultModel parameter'}), 400
+
+        if (gemini_api_key in [None, 'UNSET']) and (openai_api_key in [None, 'UNSET']):
+            return jsonify({'error': 'Missing geminiKey or openaiKey parameter, at least 1 key is needed'}), 400
+
+        if receipts is None:
+            return jsonify({'error': 'Missing receipts parameter'}), 400
+
+        # Format list of receipts to string
+        receipt_str = ""
+        for receipt in receipts:
+            receipt_str += f"Merchant: {receipt['merchantName']}\n"
+            receipt_str += f"Date: {receipt['date']}\n"
+            receipt_str += f"Category: {receipt['category']}\n"
+            receipt_str += f"Total Cost: {receipt['totalCost']}\n"
+            receipt_str += "Itemized List:\n"
+            for item in receipt['itemizedList']:
+                receipt_str += f"  - {item['itemName']}: {item['itemQuantity']} x ${item['itemCost']}\n"
+            receipt_str += "\n"  # Add an extra newline to separate receipts
+        receipt_str = receipt_str.rstrip()
+
+        print(receipt_str)
+
+        # Get insights for spending pattern
+        # Receipts is a list of dicts
+        response = GeminiReceiptReview(gemini_api_key).review(receipt_str)
+
+        return jsonify(response), 200
+
 
     @app.route('/upload', methods=['POST'])
     def upload_file():
