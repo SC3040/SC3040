@@ -6,7 +6,7 @@ import axios from 'axios';
 import { UserService } from '../user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { parse } from 'date-fns';
+import { parse, isValid } from 'date-fns';
 import { TrackErrors } from '../metrics/function-error.decorator';
 
 @Injectable()
@@ -289,14 +289,15 @@ export class ReceiptService {
   private parseDate(dateString: string): Date | null {
     // Try to parse the ISO date format first
     const isoDate = new Date(dateString);
-    if (!isNaN(isoDate.getTime())) {
+    if (isValid(isoDate)) {
       return isoDate; // Return if it's a valid ISO date
     }
 
     // If it's not a valid ISO date, try parsing it as "dd/MM/yyyy"
-    try {
-      return parse(dateString, 'dd/MM/yyyy', new Date());
-    } catch {
+    const parsedDate = parse(dateString, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return parsedDate;
+    } else {
       this.logger.log('Invalid date format received:', dateString);
       return null; // Return null if neither format is valid
     }
