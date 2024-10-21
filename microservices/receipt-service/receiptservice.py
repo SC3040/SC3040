@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from gemini import GeminiReceiptParser, GeminiReceiptReview
 from Receipt import ReceiptEncoder
 from Exceptions import APIKeyError
-from gpt4o import OpenAIReceiptParser
+from gpt4o import OpenAIReceiptParser, OpenAIReceiptReview
 from flask import Response
 from pdf2image import convert_from_bytes
 import json
@@ -57,8 +57,47 @@ def create_app():
 
         # Get insights for spending pattern
         # Receipts is a list of dicts
-        response = GeminiReceiptReview(gemini_api_key).review(receipt_str)
+        reviewers = [
+            ('GEMINI', GeminiReceiptReview, gemini_api_key),
+            ('OPENAI', OpenAIReceiptReview, openai_api_key),
+            # Additional reviewers can be added here
+        ]
+        # Make sure the default_model parser is the first in the list
+        reviewers.sort(key=lambda x: x[0] != default_model.upper())
 
+        response = None
+        api_key_error_models = []
+        # Try each parser in order, default_model first, then the rest
+        for model_name, parser_cls, api_key in reviewers:
+            if api_key == 'UNSET':
+                print(f'Skipping {model_name} reviewer, {model_name} API key is not set')
+                continue
+            try:
+                print(f'Reviewing with {model_name} reviewer')
+                # Init the parser
+                receipt_reviewer = parser_cls(api_key)
+                # Parse the receipt
+                response = receipt_reviewer.review(receipt_str)
+
+                # If response is not None, we successfully generated insights to the receipt
+                if response is not None:
+                    break
+            except APIKeyError:
+                api_key_error_models.append(model_name)
+                if model_name == reviewers[-1][0]:
+                    return jsonify({'error': f"Invalid API keys for {api_key_error_models}"}), 401
+            except Exception as e:
+                print(f"Unexpected error occurred while reviewing with {model_name}: {e}")
+                continue
+
+        # After all parsers have been tried, if response is still None, return an error
+        if response is None:
+            # Return standard insights
+            return jsonify("""Track your spending diligently to identify unnecessary expenses, prioritize needs over wants, and create a realistic budget.
+Cut costs by meal planning, reducing utility usage, and canceling unused subscriptions.
+Pay down high-interest debt aggressively while exploring cheaper alternatives for insurance, transportation, and entertainment.""".strip()), 200
+
+        # Use ReceiptEncoder explicitly because some error with pytest not using
         return jsonify(response), 200
 
 
