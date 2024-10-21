@@ -1,3 +1,20 @@
+jest.mock('fs', () => {
+  const originalFs = jest.requireActual('fs'); // Import the actual 'fs' module
+  return {
+    ...originalFs, // Preserve all original 'fs' methods
+    readFileSync: jest.fn((path: string, encoding: string) => {
+      if (path === '/app/keys/backend_private.pem') {
+        return 'mock_backend_private_key'; // Mocked content
+      }
+      if (path === '/app/keys/frontend_public.pem') {
+        return 'mock_frontend_public_key'; // Mocked content
+      }
+      // For all other paths, use the real 'fs.readFileSync'
+      return originalFs.readFileSync(path, encoding);
+    }),
+  };
+});
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -13,6 +30,22 @@ import {
 } from './dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { EncryptInterceptor } from '../shared/interceptors/encrypt.interceptor';
+
+// Mock EncryptInterceptor that does not modify the response
+@Injectable()
+class MockEncryptInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle(); // Passes the response through unchanged
+  }
+}
 
 describe('UserController', () => {
   let controller: UserController;
@@ -43,7 +76,13 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [{ provide: UserService, useValue: mockUserService }],
+      providers: [
+        { provide: UserService, useValue: mockUserService },
+        {
+          provide: EncryptInterceptor, // Provide the interceptor
+          useClass: MockEncryptInterceptor, // Use the mock implementation
+        },
+      ],
     }).compile();
 
     controller = module.get<UserController>(UserController);

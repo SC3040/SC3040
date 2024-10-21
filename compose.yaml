@@ -10,6 +10,8 @@ services:
     volumes:
       - ./frontend:/src/frontend
       - /src/frontend/node_modules
+      - ./keys/backend_public.pem:/app/keys/backend_public.pem:ro  # Mount Backend's Public Key
+      - ./keys/frontend_private.pem:/app/keys/frontend_private.pem:ro  # Mount Frontend's Private Key
     environment:
       - BACKEND_URL=http://backend:8080
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
@@ -92,6 +94,9 @@ services:
     volumes:
       - ./backend:/src/backend # Sync the source code to /src/backend
       - /src/backend/node_modules # Prevent node_modules from being overwritten
+      - ./keys/backend_private.pem:/app/keys/backend_private.pem:ro # Mount Backend's Private Key
+      - ./keys/frontend_public.pem:/app/keys/frontend_public.pem:ro # Mount Frontend's Public Key
+
     environment:
       - PORT=8080
       - APP_NAME=backend

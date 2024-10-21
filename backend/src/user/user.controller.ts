@@ -37,6 +37,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response, Request } from 'express';
+import { EncryptInterceptor } from '../shared/interceptors/encrypt.interceptor';
 
 @ApiTags('users')
 @Controller('users')
@@ -140,6 +141,7 @@ export class UserController {
     description: 'API tokens retrieved successfully.',
     type: ApiTokenResponseDto,
   })
+  @UseInterceptors(EncryptInterceptor) // Apply interceptor to encrypt outgoing response payload to frontend -> apiKey(s) are sensitive data
   async getApiToken(@User('_id') userId: string): Promise<ApiTokenResponseDto> {
     this.logger.log('Extracted user ID from decorator:', userId);
     return await this.userService.getApiToken(userId);
