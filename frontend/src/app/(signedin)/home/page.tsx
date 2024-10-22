@@ -28,17 +28,15 @@ const HomePage = () => {
 
     const columns = createColumns();
 
-    console.log("[Home page.tsx] user obj: ", user);
-
     return (
-        <div className="flex_col_center w-full gap-4">
+        <div className="flex flex-col w-full gap-4 px-1 py-4">
 
-            <div className="flex justify-between items-center w-1/2">
+            <div className="flex flex-col md:flex-row justify-between items-center w-full md:w-1/2">
                 <p>User ID: {user?.id}</p>
                 <p>User email: {user?.email}</p>
             </div>
 
-            <div className="w-full flex_center">
+            <div className="w-full flex justify-center">
                 <AIAnalysis />
             </div>
 
@@ -46,11 +44,11 @@ const HomePage = () => {
                 <LineChartC data={receiptData}/>
             </div>
 
-            <div className="w-full flex gap-4">
-                <div className="w-1/2">
+            <div className="w-full flex flex-col md:flex-row gap-4">
+                <div className="w-full md:w-1/2">
                     <BarChartC data={receiptData}/>
                 </div>
-                <div className="w-1/2">
+                <div className="w-full md:w-1/2">
                     <TableC columns={columns} data={receiptData} displayRows={5} />
                 </div>
             </div>
