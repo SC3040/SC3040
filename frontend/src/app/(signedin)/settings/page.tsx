@@ -16,9 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const SettingsPage = () => {
-
-  const { loading, error, tokenStatus, updateTokens, fetchTokenStatus } =
-    useApiTokens();
+  const { loading, error, tokenStatus, updateTokens, fetchTokenStatus } = useApiTokens();
 
   const [formData, setFormData] = useState({
     geminiAPIKey: "",
@@ -27,9 +25,7 @@ const SettingsPage = () => {
   });
 
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(
-    undefined
-  );
+  const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showOpenAIKey, setShowOpenAIKey] = useState(false);
@@ -47,7 +43,6 @@ const SettingsPage = () => {
     }
   }, [tokenStatus]);
 
-  // timer to remove success message after 2s
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -69,7 +64,6 @@ const SettingsPage = () => {
       defaultModel: formData.primaryAIProvider,
     };
 
-    // Only include keys if they are provided by the user (non-empty)
     if (formData.geminiAPIKey) payload.geminiKey = formData.geminiAPIKey;
     if (formData.openaiAPIKey) payload.openaiKey = formData.openaiAPIKey;
 
@@ -100,8 +94,8 @@ const SettingsPage = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
+    <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+      <Card className="w-full">
         <form onSubmit={handleSubmit}>
           <CardHeader>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center">
