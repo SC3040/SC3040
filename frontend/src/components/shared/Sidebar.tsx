@@ -5,9 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { sideBarLinks } from '@/constants';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import { useAuth } from '@/hooks/AuthProvider';
 
 const Sidebar: React.FC = () => {
@@ -15,6 +15,8 @@ const Sidebar: React.FC = () => {
     const pathname = usePathname();
     const router = useRouter();
     const { signOut } = useAuth();
+
+    const { user } = useAuth();
 
     const handleLinkClick = (linkLabel: string, route: string) => (e: React.MouseEvent) => {
         e.preventDefault();
@@ -49,16 +51,33 @@ const Sidebar: React.FC = () => {
 
     const SidebarContent = () => (
         <aside className="h-full w-full flex flex-col justify-between bg-white py-8">
-            <div className="flex flex-col space-y-2">
-                {sideBarLinks
-                    .filter(link => link.position === "top")
-                    .map(link => (
-                        <SidebarLink key={link.id} link={link} />
-                    ))
-                }
+            <div>
+                {user && (
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="w-20 h-20 rounded-full overflow-hidden">
+                            <Image
+                                src={`data:image/jpeg;base64,${user.image}`}
+                                alt={`${user.firstName} ${user.lastName}'s profile picture`}
+                                width={80}
+                                height={80}
+                                className="object-cover"
+                            />
+                        </div>
+                        <span className="text-lg font-semibold">{`${user.firstName} ${user.lastName}`}</span>
+                    </div>
+                )}
+
+                <div className="flex flex-col space-y-1 mt-2">
+                    {sideBarLinks
+                        .filter(link => link.position === "top")
+                        .map(link => (
+                            <SidebarLink key={link.id} link={link} />
+                        ))
+                    }
+                </div>
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-1">
                 {sideBarLinks
                     .filter(link => link.position === "bot")
                     .map(link => (
@@ -78,7 +97,7 @@ const Sidebar: React.FC = () => {
                         <Menu className="h-4 w-4" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-64 p-0">
+                <SheetContent side="left" className="w-64 h-full p-0">
                     <SidebarContent />
                 </SheetContent>
             </Sheet>
