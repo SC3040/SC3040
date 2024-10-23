@@ -19,7 +19,7 @@ export default function TableC<TData, TValue>({
 
 return (
 
-    <Card className="w-full bg-transparent">
+    <Card className="w-full bg-transparent border-slate-200 border-2">
       <CardHeader>
         <CardTitle>Your Transactions</CardTitle>
         <CardDescription>Your recent receipt data by date</CardDescription>

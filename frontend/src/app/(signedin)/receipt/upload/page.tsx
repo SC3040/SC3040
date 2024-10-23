@@ -250,7 +250,7 @@ const ReceiptImagePage: React.FC = () => {
                                 </Button>
                             </label>
                             <Button onClick={handleUpload} disabled={!file || isUploading} className="flex-1">
-                                {isUploading ? 'Extracting...' : 'Extract Data'}
+                                {isUploading ? 'Extracting...' : 'Extract Details'}
                             </Button>
                         </div>
                     </div>

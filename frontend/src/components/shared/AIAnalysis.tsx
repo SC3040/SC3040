@@ -69,7 +69,7 @@ const AIAnalysis: React.FC = () => {
   };
 
   return (
-    <Card className="w-full bg-transparent">
+    <Card className="w-full bg-transparent border-slate-200 border-2">
       <CardHeader>
         <CardTitle>
           AI Insights
