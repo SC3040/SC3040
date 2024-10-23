@@ -14,6 +14,7 @@ import { RequestTimingMiddleware } from './metrics/request-timing.middleware';
 import { ErrorTrackingMiddleware } from './metrics/error-tracking.middleware'; // Import the middleware
 import { RequestConcurrencyMiddleware } from './metrics/request-concurrency.middleware';
 import { DecryptMiddleware } from './shared/middleware/decrypt.middleware';
+import { AuthMiddleware } from './user/auth.middleware';
 
 @Module({
   imports: [
@@ -46,7 +47,7 @@ import { DecryptMiddleware } from './shared/middleware/decrypt.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply RequestTimingMiddleware globally for all routes
+    // Apply metrics middleware globally for all routes
     consumer
       .apply(RequestConcurrencyMiddleware)
       .exclude({ path: '/metrics', method: RequestMethod.ALL })
@@ -55,7 +56,6 @@ export class AppModule implements NestModule {
       .apply(RequestTimingMiddleware)
       .exclude({ path: '/metrics', method: RequestMethod.ALL })
       .forRoutes('*');
-    // Apply ErrorTrackingMiddleware globally for all routes
     consumer.apply(ErrorTrackingMiddleware).forRoutes('*');
     // Apply DecryptMiddleware for specific user routes (DecryptMiddleware is applied before AuthMiddleware -> no conflict)
     // Applicable to incoming requests with encrypted payloads
@@ -67,5 +67,21 @@ export class AppModule implements NestModule {
     //   { path: '/users/login', method: RequestMethod.POST }, // Login -> password in payload
     //   { path: '/users/reset-password', method: RequestMethod.POST }, // Request password reset -> new password in payload
     // );
+    // Apply AuthMiddleware for specific user routes and all receipt routes
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        // no need for POST methods to be protected (register & login)
+        { path: 'users/register', method: RequestMethod.POST },
+        { path: 'users/login', method: RequestMethod.POST },
+        { path: 'users/security-questions', method: RequestMethod.GET },
+        { path: 'users/get-security-question', method: RequestMethod.GET },
+      )
+      .forRoutes(
+        { path: 'users*', method: RequestMethod.GET },
+        { path: 'users*', method: RequestMethod.PUT },
+        { path: '/receipts', method: RequestMethod.ALL },
+        { path: '/receipts/*', method: RequestMethod.ALL },
+      );
   }
 }
