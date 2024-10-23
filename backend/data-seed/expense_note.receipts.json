@@ -1,10 +1,11 @@
-[{
+[
+  {
   "_id": {
     "$oid": "66f0da42eada3ce65897f5b3"
   },
   "merchantName": "Osteria 177",
   "date": {
-    "$date": "2024-09-21T00:00:00.000Z"
+    "$date": "2024-07-21T00:00:00.000Z"
   },
   "totalCost": 633,
   "category": "Food",
@@ -79,7 +80,7 @@
   },
   "merchantName": "JOSE CHIQUITO RESTAURANT",
   "date": {
-    "$date": "2024-09-22T00:00:00.000Z"
+    "$date": "2024-07-22T00:00:00.000Z"
   },
   "totalCost": 58,
   "category": "Food",
@@ -129,7 +130,7 @@
   },
   "merchantName": "HEN AND CHICKEN",
   "date": {
-    "$date": "2024-09-22T00:00:00.000Z"
+    "$date": "2024-07-22T00:00:00.000Z"
   },
   "totalCost": 10,
   "category": "Food",
@@ -154,7 +155,7 @@
   },
   "merchantName": "Grab",
   "date": {
-    "$date": "2024-09-23T00:00:00.000Z"
+    "$date": "2024-08-23T00:00:00.000Z"
   },
   "totalCost": 15,
   "category": "Transport",
@@ -174,7 +175,7 @@
   },
   "merchantName": "Shell Gas Station",
   "date": {
-    "$date": "2024-09-24T00:00:00.000Z"
+    "$date": "2024-08-24T00:00:00.000Z"
   },
   "totalCost": 120,
   "category": "Transport",
@@ -912,4 +913,471 @@
   ],
   "userId": "66f0cae53f33fc7276ec3c40",
   "__v": 0
-}]
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee4"
+  },
+  "merchantName": "Whole Foods Market",
+  "date": {
+    "$date": "2024-11-01T00:00:00.000Z"
+  },
+  "totalCost": 85,
+  "category": "Food",
+  "itemizedList": [
+    {
+      "itemName": "Organic Produce Bundle",
+      "itemQuantity": 1,
+      "itemCost": 45
+    },
+    {
+      "itemName": "Fresh Salmon Fillet",
+      "itemQuantity": 1,
+      "itemCost": 25
+    },
+    {
+      "itemName": "Quinoa Package",
+      "itemQuantity": 1,
+      "itemCost": 15
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee5"
+  },
+  "merchantName": "Pure Fitness",
+  "date": {
+    "$date": "2024-11-03T00:00:00.000Z"
+  },
+  "totalCost": 120,
+  "category": "Leisure",
+  "itemizedList": [
+    {
+      "itemName": "Monthly Gym Membership",
+      "itemQuantity": 1,
+      "itemCost": 120
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee6"
+  },
+  "merchantName": "Muji",
+  "date": {
+    "$date": "2024-11-05T00:00:00.000Z"
+  },
+  "totalCost": 75,
+  "category": "Housing",
+  "itemizedList": [
+    {
+      "itemName": "Storage Containers",
+      "itemQuantity": 3,
+      "itemCost": 45
+    },
+    {
+      "itemName": "Aroma Diffuser",
+      "itemQuantity": 1,
+      "itemCost": 30
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee7"
+  },
+  "merchantName": "Din Tai Fung",
+  "date": {
+    "$date": "2024-11-07T00:00:00.000Z"
+  },
+  "totalCost": 68,
+  "category": "Food",
+  "itemizedList": [
+    {
+      "itemName": "Xiao Long Bao",
+      "itemQuantity": 2,
+      "itemCost": 30
+    },
+    {
+      "itemName": "Fried Rice",
+      "itemQuantity": 1,
+      "itemCost": 18
+    },
+    {
+      "itemName": "Chinese Tea",
+      "itemQuantity": 2,
+      "itemCost": 20
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee8"
+  },
+  "merchantName": "Popular Bookstore",
+  "date": {
+    "$date": "2024-11-09T00:00:00.000Z"
+  },
+  "totalCost": 55,
+  "category": "Others",
+  "itemizedList": [
+    {
+      "itemName": "Productivity Planner",
+      "itemQuantity": 1,
+      "itemCost": 25
+    },
+    {
+      "itemName": "Stationery Set",
+      "itemQuantity": 1,
+      "itemCost": 30
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ee9"
+  },
+  "merchantName": "Gong Cha",
+  "date": {
+    "$date": "2024-11-11T00:00:00.000Z"
+  },
+  "totalCost": 12,
+  "category": "Food",
+  "itemizedList": [
+    {
+      "itemName": "Milk Tea With Pearls",
+      "itemQuantity": 2,
+      "itemCost": 12
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef0"
+  },
+  "merchantName": "FairPrice Finest",
+  "date": {
+    "$date": "2024-11-13T00:00:00.000Z"
+  },
+  "totalCost": 180,
+  "category": "Food",
+  "itemizedList": [
+    {
+      "itemName": "Weekly Groceries",
+      "itemQuantity": 1,
+      "itemCost": 150
+    },
+    {
+      "itemName": "Household Supplies",
+      "itemQuantity": 1,
+      "itemCost": 30
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef1"
+  },
+  "merchantName": "Prime Taxi",
+  "date": {
+    "$date": "2024-11-15T00:00:00.000Z"
+  },
+  "totalCost": 22,
+  "category": "Transport",
+  "itemizedList": [
+    {
+      "itemName": "Airport Transfer",
+      "itemQuantity": 1,
+      "itemCost": 22
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef2"
+  },
+  "merchantName": "Unity Pharmacy",
+  "date": {
+    "$date": "2024-11-17T00:00:00.000Z"
+  },
+  "totalCost": 45,
+  "category": "Healthcare",
+  "itemizedList": [
+    {
+      "itemName": "Multivitamins",
+      "itemQuantity": 1,
+      "itemCost": 25
+    },
+    {
+      "itemName": "First Aid Supplies",
+      "itemQuantity": 1,
+      "itemCost": 20
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef3"
+  },
+  "merchantName": "Cotton On",
+  "date": {
+    "$date": "2024-11-19T00:00:00.000Z"
+  },
+  "totalCost": 85,
+  "category": "Clothing",
+  "itemizedList": [
+    {
+      "itemName": "Casual Shirts",
+      "itemQuantity": 3,
+      "itemCost": 45
+    },
+    {
+      "itemName": "Shorts",
+      "itemQuantity": 2,
+      "itemCost": 40
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef4"
+  },
+  "merchantName": "Far East Flora",
+  "date": {
+    "$date": "2024-11-21T00:00:00.000Z"
+  },
+  "totalCost": 65,
+  "category": "Housing",
+  "itemizedList": [
+    {
+      "itemName": "Indoor Plants",
+      "itemQuantity": 2,
+      "itemCost": 40
+    },
+    {
+      "itemName": "Plant Pots",
+      "itemQuantity": 2,
+      "itemCost": 25
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef5"
+  },
+  "merchantName": "Wild Honey",
+  "date": {
+    "$date": "2024-11-23T00:00:00.000Z"
+  },
+  "totalCost": 95,
+  "category": "Food",
+  "itemizedList": [
+    {
+      "itemName": "European Breakfast",
+      "itemQuantity": 2,
+      "itemCost": 70
+    },
+    {
+      "itemName": "Fresh Juice",
+      "itemQuantity": 2,
+      "itemCost": 25
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef6"
+  },
+  "merchantName": "Decathlon",
+  "date": {
+    "$date": "2024-11-25T00:00:00.000Z"
+  },
+  "totalCost": 130,
+  "category": "Leisure",
+  "itemizedList": [
+    {
+      "itemName": "Yoga Mat",
+      "itemQuantity": 1,
+      "itemCost": 50
+    },
+    {
+      "itemName": "Sports Attire",
+      "itemQuantity": 1,
+      "itemCost": 80
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef7"
+  },
+  "merchantName": "National Gallery",
+  "date": {
+    "$date": "2024-11-26T00:00:00.000Z"
+  },
+  "totalCost": 40,
+  "category": "Leisure",
+  "itemizedList": [
+    {
+      "itemName": "Exhibition Tickets",
+      "itemQuantity": 2,
+      "itemCost": 40
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef8"
+  },
+  "merchantName": "Pet Lovers Centre",
+  "date": {
+    "$date": "2024-11-27T00:00:00.000Z"
+  },
+  "totalCost": 95,
+  "category": "Others",
+  "itemizedList": [
+    {
+      "itemName": "Pet Food",
+      "itemQuantity": 1,
+      "itemCost": 65
+    },
+    {
+      "itemName": "Pet Toys",
+      "itemQuantity": 2,
+      "itemCost": 30
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608ef9"
+  },
+  "merchantName": "Power Mac Center",
+  "date": {
+    "$date": "2024-11-28T00:00:00.000Z"
+  },
+  "totalCost": 250,
+  "category": "Others",
+  "itemizedList": [
+    {
+      "itemName": "External Hard Drive",
+      "itemQuantity": 1,
+      "itemCost": 250
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608f00"
+  },
+  "merchantName": "Spa Botanica",
+  "date": {
+    "$date": "2024-11-29T00:00:00.000Z"
+  },
+  "totalCost": 180,
+  "category": "Healthcare",
+  "itemizedList": [
+    {
+      "itemName": "Therapeutic Massage",
+      "itemQuantity": 1,
+      "itemCost": 180
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608f01"
+  },
+  "merchantName": "Capitol Theatre",
+  "date": {
+    "$date": "2024-11-30T00:00:00.000Z"
+  },
+  "totalCost": 160,
+  "category": "Leisure",
+  "itemizedList": [
+    {
+      "itemName": "Theatre Show Tickets",
+      "itemQuantity": 2,
+      "itemCost": 160
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608f02"
+  },
+  "merchantName": "Best Denki",
+  "date": {
+    "$date": "2024-11-30T00:00:00.000Z"
+  },
+  "totalCost": 299,
+  "category": "Housing",
+  "itemizedList": [
+    {
+      "itemName": "Air Purifier",
+      "itemQuantity": 1,
+      "itemCost": 299
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f0e4cf215878502e608f03"
+  },
+  "merchantName": "Harvey Norman",
+  "date": {
+    "$date": "2024-11-30T00:00:00.000Z"
+  },
+  "totalCost": 199,
+  "category": "Housing",
+  "itemizedList": [
+    {
+      "itemName": "Coffee Machine",
+      "itemQuantity": 1,
+      "itemCost": 199
+    }
+  ],
+  "userId": "66f0cae53f33fc7276ec3c40",
+  "__v": 0
+}
+
+]

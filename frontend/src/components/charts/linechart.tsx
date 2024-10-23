@@ -32,7 +32,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
   }, [data]);
 
   return (
-    <Card className="w-full bg-transparent">
+    <Card className="w-full bg-transparent border-slate-200 border-2">
       <CardHeader>
         <CardTitle>Monthly Spending Trend</CardTitle>
         <CardDescription>Total spending by month</CardDescription>

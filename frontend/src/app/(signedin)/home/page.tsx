@@ -31,11 +31,6 @@ const HomePage = () => {
     return (
         <div className="flex flex-col w-full gap-4 px-1 py-4">
 
-            <div className="flex flex-col md:flex-row justify-between items-center w-full md:w-1/2">
-                <p>User ID: {user?.id}</p>
-                <p>User email: {user?.email}</p>
-            </div>
-
             <div className="w-full flex justify-center">
                 <AIAnalysis />
             </div>

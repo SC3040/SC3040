@@ -3,6 +3,7 @@
 import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { useReceipt } from '@/hooks/useReceipt';
@@ -211,7 +212,7 @@ const ReceiptImagePage: React.FC = () => {
             <h1 className="text-2xl font-bold mb-4">Create Receipt</h1>
             
             <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Upload Receipt Image (Optional)</h2>
+                <h2 className="text-xl font-semibold mb-2">Upload Receipt Image</h2>
                 <Input
                     type="file"
                     accept={ALLOWED_FILE_TYPES.join(',')}
@@ -222,11 +223,11 @@ const ReceiptImagePage: React.FC = () => {
                 />
 
                 {!file && (
-                    <label htmlFor="file-upload" className="cursor-pointer mb-4 block">
+                    <label htmlFor="file-upload" className="cursor-pointer mb-4 block hover:bg-slate-50 transition duration-150 ease-in-out">
                         <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
                             <div className="text-center">
                                 <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                <p className="mt-1 text-sm text-gray-600">Click to upload image</p>
+                                <p className="mt-1 text-sm text-gray-600">Click to upload image (optional)</p>
                                 <p className="text-xs text-gray-500">PNG or JPEG up to 5MB</p>
                             </div>
                         </div>
@@ -250,7 +251,7 @@ const ReceiptImagePage: React.FC = () => {
                                 </Button>
                             </label>
                             <Button onClick={handleUpload} disabled={!file || isUploading} className="flex-1">
-                                {isUploading ? 'Extracting...' : 'Extract Data'}
+                                {isUploading ? 'Extracting...' : 'Extract Details'}
                             </Button>
                         </div>
                     </div>
@@ -258,39 +259,56 @@ const ReceiptImagePage: React.FC = () => {
             </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                    value={receiptData.merchantName}
-                    onChange={(e) => handleInputChange(e, 'merchantName')}
-                    onFocus={handleInputFocus}
-                    placeholder="Merchant Name"
-                />
-                <Input
-                    type="date"
-                    value={receiptData.date}
-                    onChange={(e) => handleInputChange(e, 'date')}
-                    onFocus={handleInputFocus}
-                />
-                <Input
-                    type="number"
-                    value={receiptData.totalCost}
-                    onChange={(e) => handleInputChange(e, 'totalCost')}
-                    onFocus={handleInputFocus}
-                    placeholder="Total Cost"
-                    step="0.01"
-                />
-                <Select value={receiptData.category} onValueChange={handleCategoryChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.values(Category).map((category) => (
-                            <SelectItem key={category} value={category}>
-                                {category}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <h3 className="font-semibold">Itemized List</h3>
+                
+                <div className="flex flex-col gap-2">
+                    <Label>Merchant:</Label>
+                    <Input
+                        value={receiptData.merchantName}
+                        onChange={(e) => handleInputChange(e, 'merchantName')}
+                        onFocus={handleInputFocus}
+                        placeholder="Starbucks"
+                    />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label>Date:</Label>
+                    <Input
+                        type="date"
+                        value={receiptData.date}
+                        onChange={(e) => handleInputChange(e, 'date')}
+                        onFocus={handleInputFocus}
+                    />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label>Cost:</Label>
+                    <Input
+                        type="number"
+                        value={receiptData.totalCost}
+                        onChange={(e) => handleInputChange(e, 'totalCost')}
+                        onFocus={handleInputFocus}
+                        placeholder="Total Cost"
+                        step="0.01"
+                    />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <Label>Category:</Label>
+                    <Select value={receiptData.category} onValueChange={handleCategoryChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Object.values(Category).map((category) => (
+                                <SelectItem key={category} value={category}>
+                                    {category}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>             
+                
+                <div className="flex flex-col gap-2">
+
+                <Label>Items</Label>
                 {receiptData.itemizedList.map((item, index) => (
                     <div key={`receiptData_i${index}`} className="space-y-2">
                         <Input
@@ -311,13 +329,14 @@ const ReceiptImagePage: React.FC = () => {
                             placeholder="Item Cost"
                             step="0.01"
                         />
-                        <Button type="button" onClick={() => handleRemoveItem(index)} variant="destructive">
-                            Remove Item
+                        <Button type="button" onClick={() => handleRemoveItem(index)} variant="destructive" className="px-3 py-2">
+                            Remove
                         </Button>
                     </div>
                 ))}
-                <Button type="button" onClick={handleAddItem} variant="outline">
-                    Add Item
+                </div >
+                <Button type="button" onClick={handleAddItem} variant="outline" className="bg-green-200 hover:bg-green-300">
+                    + Item
                 </Button>
                 <Button type="submit" disabled={isConfirming} className="w-full">
                     {isConfirming ? 'Creating Receipt...' : 'Create Receipt'}
