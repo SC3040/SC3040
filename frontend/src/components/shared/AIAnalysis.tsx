@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useAIPrompt } from '@/hooks/useAIPrompt';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const useTypewriter = (text: string, speed: number = 30) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -24,7 +25,7 @@ const useTypewriter = (text: string, speed: number = 30) => {
     setDisplayedText('');
     
     const characters = Array.from(text);
-    let index = -1;
+    let index = 0;
 
     const typeNextCharacter = () => {
       if (index < characters.length) {
@@ -83,7 +84,12 @@ const AIAnalysis: React.FC = () => {
 
         {(displayedText || isTyping) && (
           <div className="mt-4 p-4 bg-muted rounded-md">
-            <h3 className="font-semibold mb-2">Insights:</h3>
+            <div className="pb-2">
+            <Avatar>
+              <AvatarImage src="/images/ai_dp.jpg" />
+              <AvatarFallback>AI</AvatarFallback>
+            </Avatar>
+            </div>
             <div className="flex">
               <p className="whitespace-pre-line">{displayedText}</p>
               {isTyping && (
