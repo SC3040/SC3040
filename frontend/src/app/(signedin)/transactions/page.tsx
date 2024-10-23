@@ -49,7 +49,7 @@ export default function TransactionHomePage() {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-start">
-            <h1>Transactions</h1>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">Your Transactions</h1>
 
             <DataTable columns={columns} data={receiptData} displayRows={10}/>
 
