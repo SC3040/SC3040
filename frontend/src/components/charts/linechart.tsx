@@ -48,7 +48,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     filteredData = filteredData.filter((entry) => {
       const [month, year] = entry.monthYear.split('/');
       const entryDate = new Date(Number(year), Number(month) - 1, 1);
-      return entryDate >= filterDate && entryDate <= today; 
+      return entryDate >= filterDate && entryDate <= today;
     });
 
     return filteredData;
@@ -75,7 +75,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
               dataKey="monthYear"
               tickFormatter={formatMonthYear}
               tick={{ fontWeight: 'bold' }}
-              tickMargin={10} 
+              tickMargin={10}
             />
 
             <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
@@ -88,10 +88,11 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
         </ResponsiveContainer>
       </CardContent>
 
-      <div className="flex justify-center gap-2 mt-4 pb-4">
+      <div className="flex flex-wrap justify-center gap-2 mt-4 pb-4">
         <Button
           variant={timeRange === "2m" ? "default" : "outline"}
           onClick={() => setTimeRange("2m")}
+          className="w-full sm:w-auto"  
           disabled={timeRange === "2m"} 
         >
           Past 2 Months
@@ -99,6 +100,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
         <Button
           variant={timeRange === "3m" ? "default" : "outline"}
           onClick={() => setTimeRange("3m")}
+          className="w-full sm:w-auto"  
           disabled={timeRange === "3m"} 
         >
           Past 3 Months
@@ -106,6 +108,7 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
         <Button
           variant={timeRange === "6m" ? "default" : "outline"}
           onClick={() => setTimeRange("6m")}
+          className="w-full sm:w-auto"  
           disabled={timeRange === "6m"} 
         >
           Past 6 Months
@@ -113,11 +116,13 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
         <Button
           variant={timeRange === "1y" ? "default" : "outline"}
           onClick={() => setTimeRange("1y")}
+          className="w-full sm:w-auto"  
           disabled={timeRange === "1y"} 
         >
           Past 1 Year
         </Button>
       </div>
+
 
 
     </Card>
