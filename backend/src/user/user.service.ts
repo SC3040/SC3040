@@ -285,6 +285,7 @@ export class UserService {
 
   // Generate JWT token
   generateJWT(user: UserDocument): string {
+    console.log('generateJWT user._id:', user._id);
     return jwt.sign(
       { id: user._id, username: user.username, email: user.email },
       this.configService.get('JWT_SECRET'),

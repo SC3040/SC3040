@@ -14,7 +14,7 @@ export class RequestTimingMiddleware implements NestMiddleware {
         durationInSeconds,
         {
           method: req.method,
-          route: req.route ? req.route.path : '',
+          path: req.originalUrl,
           status: res.statusCode.toString(),
         },
       );

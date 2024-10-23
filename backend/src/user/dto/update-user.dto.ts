@@ -56,12 +56,12 @@ export class UpdateUserDto {
     example: 'What was the name of your first pet?',
   })
   @IsOptional()
-  readonly securityQuestion: string;
+  readonly securityQuestion?: string;
 
   @ApiProperty({
     description: 'Answer to the security question',
     example: 'Rex',
   })
   @IsOptional()
-  readonly securityAnswer: string;
+  readonly securityAnswer?: string;
 }

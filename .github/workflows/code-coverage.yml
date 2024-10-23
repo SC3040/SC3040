@@ -1,0 +1,36 @@
+name: Backend Code Coverage
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop # Add any other branches where you want this check
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Use your Node.js version
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run tests and generate coverage
+        run: |
+          cd backend
+          npm run test -- --coverage
+
+      - name: Upload code coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: backend/coverage

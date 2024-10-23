@@ -9,6 +9,7 @@ import base64
 from io import BytesIO
 from openai import AuthenticationError
 from ReceiptParser import AbstractParser
+from ReceiptReview import AbstractReview
 
 class OpenAIReceiptParser(AbstractParser):
     def __init__(self, api_key, model_version: str = 'gpt-4o-mini'):
@@ -125,3 +126,91 @@ class OpenAIReceiptParser(AbstractParser):
         buffer.seek(0)
         image_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         return image_b64
+
+
+class OpenAIReceiptReview(AbstractReview):
+    def __init__(self, api_key, model_version: str = 'gpt-4o-mini'):
+        # Response schema
+        class ReceiptReviewSchema(BaseModel):
+            status: bool
+            insights: str
+
+        super().__init__(api_key=api_key, review_schema=ReceiptReviewSchema, model_name=model_version)
+        self.client = OpenAI(api_key=self.api_key, max_retries=2, timeout=60.0)
+        # Chat session specific attributes
+        self.messages = []
+
+        # Generation config
+        self.generation_config = {
+            'n': 1,  # number of candidates to generate, only need 1
+            'max_tokens': self.buffer, # max number of tokens to generate
+            'temperature': 1.0,
+            'top_p': 1.0,
+            'response_format': self.review_schema, # Define the schema of the response
+        }
+
+    def review(self, receipt_str):
+        # Add system instruction
+        self.append_message("system", self.system_instruction)
+        # Combine user prompt and image
+        combined_prompt = [
+            {"type": "text", "text": self.initial_prompt},
+            {"type": "text", "text": receipt_str}
+        ]
+        # Add user request and their spending data
+        self.append_message("user", combined_prompt)
+
+        for attempt_num in range(self.max_retry):
+            # Send the request
+            try:
+                response = self.client.beta.chat.completions.parse(
+                    model=self.model_name,
+                    messages=self.messages,
+                    **self.generation_config
+                )
+            except AuthenticationError:
+                # Exit out to receipt service
+                raise APIKeyError()
+
+            # Append response to messages
+            response_content = response.choices[0].message.content
+            self.append_message("assistant", response_content)
+
+            # Parse json response
+            review_dict = json.loads(response_content)
+
+            if not review_dict['status']:
+                print(f"Attempt {attempt_num + 1} Error: status is False")
+                if (attempt_num + 1 == self.max_retry or
+                        response.usage.total_tokens + self.get_token_count(self.error_response) +
+                        self.buffer > self.get_token_limit(self.model_name)):
+                    print("Max retry reached. Unable to generate insights.")
+                    return None
+
+                self.append_message("user", self.error_response)
+            else:
+                print(f"Attempt {attempt_num + 1} Success")
+                return review_dict["insights"]
+
+        return None
+
+    @staticmethod
+    def get_token_limit(model_version: str) -> int:
+        # Only include vision models
+        mapper_dict = {
+            'gpt-4o-mini': 128000,
+            'gpt-4o': 128000,
+            'gpt-4-turbo': 128000,
+        }
+        return mapper_dict[model_version]
+
+    def get_token_count(self, prompt: str) -> int:
+        encoding = tiktoken.encoding_for_model(self.model_name)
+        num_tokens = len(encoding.encode(prompt))
+        return num_tokens
+
+    def append_message(self, role, content):
+        if role not in ["user", "system", "assistant"]:
+            raise ValueError("Role must be one of 'user', 'system', or 'assistant'")
+
+        self.messages.append({"role": role, "content": content})

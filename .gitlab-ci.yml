@@ -1,0 +1,20 @@
+stages:
+  - test
+
+code_coverage:
+  stage: test
+  image: node:16  # Use an official Node.js Docker image
+  script:
+    - cd backend
+    - npm install
+    - npm run test -- --coverage
+    # Extract coverage percentage from the coverage summary
+    - COVERAGE=$(grep -Po '"statements":\s*[\d\.]+' ../coverage/coverage-summary.json | grep -o '[0-9.]\+')
+    - echo "Code coverage is $COVERAGE%"
+    # Set minimum coverage threshold
+    - MINIMUM_COVERAGE=80  # Set your required minimum coverage percentage here
+    - if (( $(echo "$COVERAGE < $MINIMUM_COVERAGE" | bc -l) )); then echo "Code coverage ($COVERAGE%) is below the required $MINIMUM_COVERAGE%." && exit 1; else echo "Code coverage ($COVERAGE%) meets the required threshold."; fi
+  artifacts:
+    paths:
+      - ../coverage  # Adjusted to reflect the correct coverage directory
+  coverage: '/"statements":\s*([\d\.]+)/'  # Optional regex for displaying coverage in the pipeline UI
