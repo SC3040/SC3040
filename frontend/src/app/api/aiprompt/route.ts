@@ -12,22 +12,24 @@ export async function fetchAIPromptServerAction(): Promise<string> {
     }
 
     try {
-        // const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/review`, {
-        //     method: 'GET',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //         'Cookie': `jwt=${token}`
-        //     },
-        //     credentials: 'include',
-        // });
-        // const data = await response.json();
-        
-        // if (!response.ok) {
-        //     throw new Error(`Error in response for fetch AI prompt: ${data}`);
-        // }
+        const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/review`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': `jwt=${token}`
+            },
+            credentials: 'include',
+        });
 
-        // return data;
-        return "HARDCODED RESPONSE";
+        const data = await response.text();
+        console.log("[aiprompt route] data:", data);
+        
+        if (!response.ok) {
+            throw new Error(`Error in response for fetch AI prompt: ${data}`);
+        }
+
+        return data;
+        // return "HARDCODED RESPONSE";
 
     }catch(error){
         throw error;

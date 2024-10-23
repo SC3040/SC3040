@@ -11,6 +11,7 @@ export function useAIPrompt() {
     const fetchAIPrompt = async () : Promise<Error | null> => {
         setLoading(true);
         setPrompt("");
+        setError(null)
 
         try {
             const aIPrompt = await fetchAIPromptServerAction();
