@@ -77,7 +77,7 @@ def generate_transactions(num_transactions, start_date, end_date):
             "totalCost": total_cost,
             "category": category,
             "itemizedList": itemized_list,
-            "userId": generate_oid(),
+            "userId": '66f0cae53f33fc7276ec3c40',
             "__v": 0
         }
         transactions.append(transaction)
