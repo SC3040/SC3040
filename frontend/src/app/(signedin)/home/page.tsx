@@ -8,11 +8,12 @@ import TableC from '@/components/table/TableC'
 import { createColumns, ReceiptResponse } from "@/components/table/transactionCols"
 import { useReceipt } from "@/hooks/useReceipt";
 import AIAnalysis from '@/components/shared/AIAnalysis'
+import DonutPieChart from '@/components/charts/donutpiechart'
 
 const HomePage = () => {
 
     const { user } = useAuth();
-    const { getAllReceipts, isGetting} = useReceipt();
+    const { getAllReceipts, isGetting } = useReceipt();
     const [receiptData, setReceiptData] = useState<ReceiptResponse[]>([])
     useEffect(() => {
         const fetchReceipts = async () => {
@@ -36,17 +37,20 @@ const HomePage = () => {
             </div>
 
             <div className="w-full">
-                <LineChartC data={receiptData}/>
+                <LineChartC data={receiptData} />
             </div>
-
+            <div className="w-full">
+                <DonutPieChart data={receiptData} />
+            </div>
             <div className="w-full flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
-                    <BarChartC data={receiptData}/>
+                    <BarChartC data={receiptData} />
                 </div>
                 <div className="w-full md:w-1/2">
                     <TableC columns={columns} data={receiptData} displayRows={5} />
                 </div>
             </div>
+
         </div>
     )
 }
