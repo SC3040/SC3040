@@ -18,7 +18,7 @@ const generateMonthOptions = () => {
   return months;
 };
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6347', '#8A2BE2', '#D2691E'];
+const COLORS = ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'];
 
 interface DonutPieChartProps {
   data: ReceiptResponse[];
@@ -76,9 +76,9 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width <= 480) {
-        setChartSize({ innerRadius: 20, outerRadius: 50, labelPosition: 'inside' });
+        setChartSize({ innerRadius: 10, outerRadius: 30, labelPosition: 'inside' });
       } else if (width <= 768) {
-        setChartSize({ innerRadius: 30, outerRadius: 70, labelPosition: 'inside' });
+        setChartSize({ innerRadius: 20, outerRadius: 40, labelPosition: 'inside' });
       } else {
         setChartSize({ innerRadius: 80, outerRadius: 120, labelPosition: 'inside' });
       }
@@ -89,6 +89,11 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Tooltip formatter function to add comma separator
+  const tooltipFormatter = (value: number) => {
+    return `$${value.toLocaleString()}`;
+  };
 
   return (
     <Card className="w-full bg-transparent border-slate-200 border-2">
@@ -147,7 +152,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={tooltipFormatter} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -155,7 +160,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
       </CardContent>
       <CardFooter className="flex justify-center items-center">
         <div className="text-center text-sm font-medium">
-          Total Spending: ${totalSpending.toFixed(2)}
+          Total Spending: ${totalSpending.toLocaleString()}
         </div>
       </CardFooter>
     </Card>
