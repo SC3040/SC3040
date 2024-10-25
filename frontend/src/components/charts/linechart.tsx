@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import React, { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
@@ -54,7 +54,6 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     return filteredData;
   }, [data, timeRange]);
 
-  // Function to format date as abbreviated month names (e.g., 'Aug', 'Sep')
   const formatMonthYear = (monthYear: string) => {
     const [month, year] = monthYear.split('/');
     const date = new Date(Number(year), Number(month) - 1);
@@ -68,6 +67,40 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
         <CardDescription>Total spending by month</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="flex flex-wrap justify-start gap-2 mb-4 pb-2">
+          <Button
+            variant={timeRange === "2m" ? "default" : "outline"}
+            onClick={() => setTimeRange("2m")}
+            className="p-2 border border-gray-300 rounded w-full sm:w-auto"
+            disabled={timeRange === "2m"}
+          >
+            Past 2 Months
+          </Button>
+          <Button
+            variant={timeRange === "3m" ? "default" : "outline"}
+            onClick={() => setTimeRange("3m")}
+            className="p-2 border border-gray-300 rounded w-full sm:w-auto"
+            disabled={timeRange === "3m"}
+          >
+            Past 3 Months
+          </Button>
+          <Button
+            variant={timeRange === "6m" ? "default" : "outline"}
+            onClick={() => setTimeRange("6m")}
+            className="p-2 border border-gray-300 rounded w-full sm:w-auto"
+            disabled={timeRange === "6m"}
+          >
+            Past 6 Months
+          </Button>
+          <Button
+            variant={timeRange === "1y" ? "default" : "outline"}
+            onClick={() => setTimeRange("1y")}
+            className="p-2 border border-gray-300 rounded w-full sm:w-auto"
+            disabled={timeRange === "1y"}
+          >
+            Past 1 Year
+          </Button>
+        </div>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -87,44 +120,6 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
-
-      <div className="flex flex-wrap justify-center gap-2 mt-4 pb-4">
-        <Button
-          variant={timeRange === "2m" ? "default" : "outline"}
-          onClick={() => setTimeRange("2m")}
-          className="w-full sm:w-auto"  
-          disabled={timeRange === "2m"} 
-        >
-          Past 2 Months
-        </Button>
-        <Button
-          variant={timeRange === "3m" ? "default" : "outline"}
-          onClick={() => setTimeRange("3m")}
-          className="w-full sm:w-auto"  
-          disabled={timeRange === "3m"} 
-        >
-          Past 3 Months
-        </Button>
-        <Button
-          variant={timeRange === "6m" ? "default" : "outline"}
-          onClick={() => setTimeRange("6m")}
-          className="w-full sm:w-auto"  
-          disabled={timeRange === "6m"} 
-        >
-          Past 6 Months
-        </Button>
-        <Button
-          variant={timeRange === "1y" ? "default" : "outline"}
-          onClick={() => setTimeRange("1y")}
-          className="w-full sm:w-auto"  
-          disabled={timeRange === "1y"} 
-        >
-          Past 1 Year
-        </Button>
-      </div>
-
-
-
     </Card>
   );
 }

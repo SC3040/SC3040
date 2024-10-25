@@ -11,7 +11,7 @@ const generateMonthOptions = () => {
   const now = moment();
 
   for (let i = 0; i < 12; i++) {
-    months.push(now.format('MMMM YYYY')); 
+    months.push(now.format('MMMM YYYY'));
     now.subtract(1, 'month');
   }
 
@@ -64,7 +64,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
     return Object.entries(categoryTotals).map(([category, total]) => ({
       category,
       total,
-      percentage: ((total / totalSpending) * 100).toFixed(2), 
+      percentage: ((total / totalSpending) * 100).toFixed(2),
     }));
   }, [filteredData]);
 
@@ -76,36 +76,37 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width <= 480) {
-        // Mobile: Use smaller radii and move labels outside the pie
-        setChartSize({ innerRadius: 30, outerRadius: 60, labelPosition: 'inside' });
+        setChartSize({ innerRadius: 20, outerRadius: 50, labelPosition: 'inside' });
       } else if (width <= 768) {
-        // Tablet: Adjust for medium screens
-        setChartSize({ innerRadius: 40, outerRadius: 80, labelPosition: 'inside' });
+        setChartSize({ innerRadius: 30, outerRadius: 70, labelPosition: 'inside' });
       } else {
-        // Desktop: Larger pie with inside labels
         setChartSize({ innerRadius: 80, outerRadius: 120, labelPosition: 'inside' });
       }
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize(); 
+    handleResize();
 
-    return () => window.removeEventListener('resize', handleResize); 
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
-    <Card className="flex flex-col w-full bg-transparent border-slate-200 border-2">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Spending Breakdown by Category for {timeFilter === '6m'
-          ? 'Past 6 Months'
-          : timeFilter === '3m'
-            ? 'Past 3 Months'
-            : timeFilter === '2m'
-              ? 'Past 2 Months'
-              : timeFilter}</CardTitle>
-
+    <Card className="w-full bg-transparent border-slate-200 border-2">
+      <CardHeader>
+        <CardTitle>
+          Spending Breakdown by Category for {timeFilter === '6m'
+            ? 'Past 6 Months'
+            : timeFilter === '3m'
+              ? 'Past 3 Months'
+              : timeFilter === '2m'
+                ? 'Past 2 Months'
+                : timeFilter}
+        </CardTitle>
+        <CardDescription>
+          Categorized breakdown of spending
+        </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent>
         <div className="flex justify-start mb-4">
           <select
             value={timeFilter}
@@ -142,7 +143,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
                   }
                   labelLine={chartSize.labelPosition === 'outside'}
                 >
-                  {chartData?.map((entry, index) => (
+                  {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -152,11 +153,10 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
+      <CardFooter className="flex justify-center items-center">
+        <div className="text-center text-sm font-medium">
           Total Spending: ${totalSpending.toFixed(2)}
         </div>
-
       </CardFooter>
     </Card>
   );
