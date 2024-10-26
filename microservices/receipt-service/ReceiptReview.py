@@ -33,5 +33,5 @@ Please do not mention about lack of spending data, General insights are also acc
         self.error_response = """Missing insight in response. Please always give some insights, even if the data is not enough to generate a meaningful insight. General insights are also acceptable.""".strip()
 
     @abstractmethod
-    def review(self, receipt_str):
+    def review(self, receipt_str, query):
         pass

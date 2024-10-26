@@ -187,8 +187,8 @@ class GeminiReceiptReview(AbstractReview):
         # Init chat instance
         self.chat_instance = self.model.start_chat(history=[], enable_automatic_function_calling=False)
 
-    def review(self, receipt_str):
-        messages = [[self.initial_prompt, receipt_str]]
+    def review(self, receipt_str, query):
+        messages = [[self.initial_prompt, receipt_str, query]]
 
         for attempt_num in range(self.max_retry):
             # Generate the receipt

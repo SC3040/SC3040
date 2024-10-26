@@ -29,6 +29,10 @@ def create_app():
         gemini_api_key = data.get('apiKeys', {}).get('geminiKey')
         openai_api_key = data.get('apiKeys', {}).get('openaiKey')
         receipts = data.get('receipts')
+        query = data.get('query')
+
+        if query is None:
+            query = ""
 
         # Check if everything is received
         if not default_model:
@@ -53,8 +57,6 @@ def create_app():
             receipt_str += "\n"  # Add an extra newline to separate receipts
         receipt_str = receipt_str.rstrip()
 
-        print(receipt_str)
-
         # Get insights for spending pattern
         # Receipts is a list of dicts
         reviewers = [
@@ -77,7 +79,7 @@ def create_app():
                 # Init the parser
                 receipt_reviewer = parser_cls(api_key)
                 # Parse the receipt
-                response = receipt_reviewer.review(receipt_str)
+                response = receipt_reviewer.review(receipt_str, query)
 
                 # If response is not None, we successfully generated insights to the receipt
                 if response is not None:
@@ -98,6 +100,7 @@ Cut costs by meal planning, reducing utility usage, and canceling unused subscri
 Pay down high-interest debt aggressively while exploring cheaper alternatives for insurance, transportation, and entertainment.""".strip()), 200
 
         # Use ReceiptEncoder explicitly because some error with pytest not using
+        print(response)
         return jsonify(response), 200
 
 

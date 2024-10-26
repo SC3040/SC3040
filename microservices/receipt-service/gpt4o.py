@@ -149,13 +149,14 @@ class OpenAIReceiptReview(AbstractReview):
             'response_format': self.review_schema, # Define the schema of the response
         }
 
-    def review(self, receipt_str):
+    def review(self, receipt_str, query):
         # Add system instruction
         self.append_message("system", self.system_instruction)
         # Combine user prompt and image
         combined_prompt = [
             {"type": "text", "text": self.initial_prompt},
-            {"type": "text", "text": receipt_str}
+            {"type": "text", "text": receipt_str},
+            {"type": "text", "text": query}
         ]
         # Add user request and their spending data
         self.append_message("user", combined_prompt)
