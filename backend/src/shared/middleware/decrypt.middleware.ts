@@ -14,20 +14,22 @@ export class DecryptMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction) {
     const encryptedPayload = req.body.payload;
-    this.logger.log(
-      'Decrypting incoming request payload of:',
-      encryptedPayload,
-    );
 
-    if (encryptedPayload) {
-      try {
-        const decryptedData = decryptWithBackendPrivateKey(encryptedPayload);
-        // Replace the encrypted payload with decrypted data
-        req.body = JSON.parse(decryptedData);
-        this.logger.log('Decrypted payload:', decryptedData);
-      } catch {
-        throw new BadRequestException('Invalid encrypted payload');
-      }
+    if (!encryptedPayload) {
+      this.logger.warn('No encrypted payload found in the request body');
+      throw new BadRequestException('Missing encrypted payload');
+    }
+
+    this.logger.log('Received encrypted payload of:', encryptedPayload);
+
+    try {
+      this.logger.log('Decrypting payload...');
+      const decryptedData = decryptWithBackendPrivateKey(encryptedPayload);
+      this.logger.log('Decrypted payload:', decryptedData);
+      // Replace the encrypted payload with decrypted data
+      req.body = JSON.parse(decryptedData);
+    } catch {
+      throw new BadRequestException('Invalid encrypted payload');
     }
 
     next();

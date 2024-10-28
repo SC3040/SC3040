@@ -19,16 +19,17 @@ try {
 export function encryptWithBackendPublicKey(data: string): string {
   try {
     console.log('[encryptWithBackendPublicKey] Input data length:', data.length);
-    
+
     const buffer = Buffer.from(data, 'utf8');
     const encrypted = crypto.publicEncrypt(
       {
         key: backendPublicKey,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
       },
       buffer
     );
-    
+
     return encrypted.toString('base64');
   } catch (error : any) {
     console.error('[encryptWithBackendPublicKey] Encryption error:', error);
@@ -81,7 +82,7 @@ export function decryptWithFrontendPrivateKey(encryptedData: string): string {
     const result = decrypted.toString('utf8');
     console.log('[decryptWithFrontendPrivateKey] Decryption successful');
     console.log('[decryptWithFrontendPrivateKey] Decrypted length:', result.length);
-    
+
     return result;
   } catch (error : any) {
     console.error('[decryptWithFrontendPrivateKey] Final decryption error:', error);

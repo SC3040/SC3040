@@ -98,7 +98,7 @@ export async function updateUserApiTokens({
         method: 'PUT',
         headers: headers,
         body: JSON.stringify({
-          encryptedData
+          payload: encryptedData
         }),
         credentials: 'include',
       });
