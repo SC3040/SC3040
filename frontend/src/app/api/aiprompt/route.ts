@@ -13,7 +13,7 @@ export async function fetchAIPromptServerAction(prompt : string): Promise<string
 
     try {
         const response = await fetch(`${process.env.BACKEND_URL}/api/receipts/review`, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Cookie': `jwt=${token}`

@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { encrypt, decrypt } from '@/lib/encryptions';
+import {encryptWithBackendPublicKey, decryptWithFrontendPrivateKey } from '@/utils/encryption'
 
 type ApiTokenResponse = {
   defaultModel: string;
@@ -23,11 +23,11 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
     };
 
     console.log('[fetchUserApiTokenStatus] Request details:');
-    console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
+    console.log('URL:', `${process.env.BACKEND_URL}/api/users/v2/api-token`);
     console.log('Method: GET');
     console.log('Headers:', JSON.stringify(headers, null, 2));
 
-    const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/users/v2/api-token`, {
       method: 'GET',
       headers: headers,
       credentials: 'include',
@@ -37,7 +37,19 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
       throw new Error(`Error fetching API token status: ${response.statusText}`);
     }
 
-    const data: ApiTokenResponse = await response.json();
+    // const data: ApiTokenResponse = await response.json();
+    // Parse the JSON response first
+    const jsonResponse = await response.json();
+    console.log('[fetchUserApiTokenStatus] Raw response:', JSON.stringify(jsonResponse, null, 2));
+
+    // Extract the encrypted payload
+    const encryptedData = jsonResponse.payload;
+    console.log('[fetchUserApiTokenStatus] Encrypted payload:', encryptedData);
+
+    // Decrypt the payload
+    const decryptedData = decryptWithFrontendPrivateKey(encryptedData);
+    const data: ApiTokenResponse = JSON.parse(decryptedData);
+
     console.log("[fetchUserApiTokenStatus] Received data:", JSON.stringify(data, null, 2));
 
     return data;
@@ -59,6 +71,13 @@ export async function updateUserApiTokens({
     throw new Error('Not authorized. JWT cookie missing or invalid.');
   }
 
+    const dataToEncrypt = JSON.stringify({
+      defaultModel,
+      geminiKey,
+      openaiKey,
+    });
+    const encryptedData = encryptWithBackendPublicKey(dataToEncrypt);
+
   try {
     const headers = {
       'Cookie': `jwt=${token}`,
@@ -74,10 +93,13 @@ export async function updateUserApiTokens({
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
       method: 'PUT',
       headers: headers,
+      // body: JSON.stringify({
+      //   defaultModel,
+      //   geminiKey,
+      //   openaiKey,
+      // }),
       body: JSON.stringify({
-        defaultModel,
-        geminiKey,
-        openaiKey,
+        encryptedData
       }),
       credentials: 'include',
     });
