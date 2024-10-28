@@ -14,7 +14,7 @@ export function useAIPrompt() {
         setError(null);
 
         try {
-            const aIPrompt = await fetchAIPromptServerAction();
+            const aIPrompt = await fetchAIPromptServerAction(prompt);
             if (typeof aIPrompt === 'string') {
                 setPrompt(aIPrompt);
                 console.log('Fetched Prompt:', aIPrompt);

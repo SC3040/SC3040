@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 
-export async function fetchAIPromptServerAction(): Promise<string> {
+export async function fetchAIPromptServerAction(prompt : string): Promise<string> {
 
     const token = cookies().get('jwt')?.value;
 
@@ -19,6 +19,9 @@ export async function fetchAIPromptServerAction(): Promise<string> {
                 'Cookie': `jwt=${token}`
             },
             credentials: 'include',
+            body: JSON.stringify({
+                query: prompt
+            })
         });
 
         const data = await response.text();
