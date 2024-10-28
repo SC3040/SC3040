@@ -343,6 +343,7 @@ describe('ReceiptService', () => {
   // Tests for getTransactionReview method
   describe('getTransactionReview', () => {
     it('should get transaction review successfully', async () => {
+      const customPrompt = 'Summarize my spending habits';
       const receipts = [
         new MockReceiptModel({
           _id: 'receiptId1',
@@ -389,7 +390,7 @@ describe('ReceiptService', () => {
         data: 'Transaction review string',
       });
 
-      const result = await service.getTransactionReview(userId);
+      const result = await service.getTransactionReview(userId, customPrompt);
 
       expect(result).toBe('Transaction review string');
       expect(axios.post).toHaveBeenCalledWith(

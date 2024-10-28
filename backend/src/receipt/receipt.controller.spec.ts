@@ -351,30 +351,43 @@ describe('ReceiptController', () => {
   describe('getTransactionReview', () => {
     it('should return user transaction review successfully', async () => {
       const userId = 'user_id';
+      const customPrompt = 'Summarize my spending habits.';
       const mockReview = 'Your transaction review summary.';
 
       // Mock the service.getTransactionReview method
       mockReceiptService.getTransactionReview.mockResolvedValue(mockReview);
 
-      const result = await controller.getTransactionReview(userId);
+      const result = await controller.getTransactionReview(
+        userId,
+        customPrompt,
+      );
 
-      expect(service.getTransactionReview).toHaveBeenCalledWith(userId);
+      expect(service.getTransactionReview).toHaveBeenCalledWith(
+        userId,
+        customPrompt,
+      );
       expect(result).toEqual(mockReview);
     });
 
     it('should throw an error if user not found', async () => {
       const userId = 'invalid_user_id';
+      const customPrompt = 'Analyze recent transactions.';
 
       // Mock the service.getTransactionReview method to throw an error
       mockReceiptService.getTransactionReview.mockRejectedValue(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
 
-      await expect(controller.getTransactionReview(userId)).rejects.toThrow(
+      await expect(
+        controller.getTransactionReview(userId, customPrompt),
+      ).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
 
-      expect(service.getTransactionReview).toHaveBeenCalledWith(userId);
+      expect(service.getTransactionReview).toHaveBeenCalledWith(
+        userId,
+        customPrompt,
+      );
     });
   });
 });
