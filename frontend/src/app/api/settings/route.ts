@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { encrypt, decrypt } from '@/lib/encryptions';
+import {encryptWithBackendPublicKey, decryptWithFrontendPrivateKey } from '@/utils/encryption'
 
 type ApiTokenResponse = {
   defaultModel: string;
@@ -23,11 +23,11 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
     };
 
     console.log('[fetchUserApiTokenStatus] Request details:');
-    console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
+    console.log('URL:', `${process.env.BACKEND_URL}/api/users/v2/api-token`);
     console.log('Method: GET');
     console.log('Headers:', JSON.stringify(headers, null, 2));
 
-    const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
+    const response = await fetch(`${process.env.BACKEND_URL}/api/users/v2/api-token`, {
       method: 'GET',
       headers: headers,
       credentials: 'include',
@@ -37,7 +37,20 @@ export async function fetchUserApiTokenStatus(): Promise<ApiTokenResponse> {
       throw new Error(`Error fetching API token status: ${response.statusText}`);
     }
 
-    const data: ApiTokenResponse = await response.json();
+    // const data: ApiTokenResponse = await response.json();
+
+    // Parse the JSON response first
+    const jsonResponse = await response.json();
+    console.log('[fetchUserApiTokenStatus] Raw response:', JSON.stringify(jsonResponse, null, 2));
+
+    // Extract the encrypted payload
+    const encryptedData = jsonResponse.payload;
+    console.log('[fetchUserApiTokenStatus] Encrypted payload:', encryptedData);
+
+    // Decrypt the payload
+    const decryptedData = decryptWithFrontendPrivateKey(encryptedData);
+    const data: ApiTokenResponse = JSON.parse(decryptedData);
+
     console.log("[fetchUserApiTokenStatus] Received data:", JSON.stringify(data, null, 2));
 
     return data;
@@ -54,43 +67,94 @@ export async function updateUserApiTokens({
 }: ApiTokenResponse): Promise<void> {
   const token = cookies().get('jwt')?.value;
 
+  const ENCRYPTION_TOGGLE : boolean = true // ALEX
+
   if (!token) {
     console.error('[updateUserApiTokens] No JWT token found in cookies');
     throw new Error('Not authorized. JWT cookie missing or invalid.');
   }
 
-  try {
-    const headers = {
-      'Cookie': `jwt=${token}`,
-      'Content-Type': 'application/json',
-    };
-
-    console.log('[updateUserApiTokens] Request details:');
-    console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
-    console.log('Method: PUT');
-    console.log('Headers:', JSON.stringify(headers, null, 2));
-    console.log('Body:', JSON.stringify({ defaultModel, geminiKey, openaiKey }, null, 2));
-
-    const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
-      method: 'PUT',
-      headers: headers,
-      body: JSON.stringify({
-        defaultModel,
-        geminiKey,
-        openaiKey,
-      }),
-      credentials: 'include',
+  if (ENCRYPTION_TOGGLE) {
+    const dataToEncrypt = JSON.stringify({
+      defaultModel,
+      geminiKey,
+      openaiKey,
     });
+    const encryptedData = encryptWithBackendPublicKey(dataToEncrypt);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[updateUserApiTokens] Error response: ${errorText}`);
-      throw new Error(`Error updating API tokens: ${response.statusText}`);
+    try {
+      const headers = {
+        'Cookie': `jwt=${token}`,
+        'Content-Type': 'application/json',
+      };
+  
+      console.log('[updateUserApiTokens] Request details:');
+      console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
+      console.log('Method: PUT');
+      console.log('Headers:', JSON.stringify(headers, null, 2));
+      console.log('Body:', JSON.stringify({ defaultModel, geminiKey, openaiKey }, null, 2));
+  
+      const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          encryptedData
+        }),
+        credentials: 'include',
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[updateUserApiTokens] Error response: ${errorText}`);
+        throw new Error(`Error updating API tokens: ${response.statusText}`);
+      }
+  
+      console.log("[updateUserApiTokens] Successfully updated tokens");
+    } catch (err) {
+      console.error('[updateUserApiTokens] Error:', err);
+      throw err;
     }
 
-    console.log("[updateUserApiTokens] Successfully updated tokens");
-  } catch (err) {
-    console.error('[updateUserApiTokens] Error:', err);
-    throw err;
+
+
+  } else {
+    try {
+      const headers = {
+        'Cookie': `jwt=${token}`,
+        'Content-Type': 'application/json',
+      };
+  
+      console.log('[updateUserApiTokens] Request details:');
+      console.log('URL:', `${process.env.BACKEND_URL}/api/users/api-token`);
+      console.log('Method: PUT');
+      console.log('Headers:', JSON.stringify(headers, null, 2));
+      console.log('Body:', JSON.stringify({ defaultModel, geminiKey, openaiKey }, null, 2));
+  
+      const response = await fetch(`${process.env.BACKEND_URL}/api/users/api-token`, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          defaultModel,
+          geminiKey,
+          openaiKey,
+        }),
+        credentials: 'include',
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[updateUserApiTokens] Error response: ${errorText}`);
+        throw new Error(`Error updating API tokens: ${response.statusText}`);
+      }
+  
+      console.log("[updateUserApiTokens] Successfully updated tokens");
+    } catch (err) {
+      console.error('[updateUserApiTokens] Error:', err);
+      throw err;
+    }
+
+
   }
+
+
 }

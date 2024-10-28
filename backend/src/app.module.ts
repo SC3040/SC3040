@@ -60,13 +60,13 @@ export class AppModule implements NestModule {
     // Apply DecryptMiddleware for specific user routes (DecryptMiddleware is applied before AuthMiddleware -> no conflict)
     // Applicable to incoming requests with encrypted payloads
     // // Temporarily commented out
-    // consumer.apply(DecryptMiddleware).forRoutes(
-    //   { path: '/users/register', method: RequestMethod.POST }, // Create new user -> password in payload
-    //   { path: '/users', method: RequestMethod.PUT }, // Update user -> password in payload
-    //   { path: '/users/api-token', method: RequestMethod.PUT }, // Update API token -> apiKey(s) in payload
-    //   { path: '/users/login', method: RequestMethod.POST }, // Login -> password in payload
-    //   { path: '/users/reset-password', method: RequestMethod.POST }, // Request password reset -> new password in payload
-    // );
+    consumer.apply(DecryptMiddleware).forRoutes(
+      // { path: '/users/register', method: RequestMethod.POST }, // Create new user -> password in payload
+      // { path: '/users', method: RequestMethod.PUT }, // Update user -> password in payload
+      { path: '/users/api-token', method: RequestMethod.PUT }, // Update API token -> apiKey(s) in payload
+      // { path: '/users/login', method: RequestMethod.POST }, // Login -> password in payload
+      // { path: '/users/reset-password', method: RequestMethod.POST }, // Request password reset -> new password in payload
+    );
     // Apply AuthMiddleware for specific user routes and all receipt routes
     consumer
       .apply(AuthMiddleware)
