@@ -33,14 +33,26 @@ export function encryptWithFrontendPublicKey(data: string): string {
  * @returns decrypted string data
  */
 export function decryptWithBackendPrivateKey(encryptedData: string): string {
-  const buffer = Buffer.from(encryptedData, 'base64');
-  const decrypted = crypto.privateDecrypt(
-    {
-      key: backendPrivateKey,
-      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      oaepHash: 'sha256',
-    },
-    buffer,
-  );
-  return decrypted.toString('utf8');
+  console.log('In encryption.util.ts - Decrypting data:', encryptedData);
+
+  try {
+    const buffer = Buffer.from(encryptedData, 'base64');
+    const decrypted = crypto.privateDecrypt(
+      {
+        key: backendPrivateKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+      },
+      buffer,
+    );
+
+    console.log(
+      'In encryption.util.ts - Decrypted data:',
+      decrypted.toString('utf8'),
+    );
+    return decrypted.toString('utf8');
+  } catch (error) {
+    console.error('Decryption failed:', error.message);
+    throw new Error('Decryption failed: ' + error.message);
+  }
 }

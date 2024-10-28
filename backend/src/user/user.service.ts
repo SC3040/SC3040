@@ -208,6 +208,8 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
+    this.logger.log('updateApiTokenDto:', updateApiTokenDto);
+
     // Encrypt the API keys before saving them
     user.apiToken = {
       ...user.apiToken,
