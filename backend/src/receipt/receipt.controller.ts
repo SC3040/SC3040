@@ -140,14 +140,19 @@ export class ReceiptController {
 
   @Get('review')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user transaction review.' })
+  @ApiOperation({
+    summary: 'Get user transaction review with a custom prompt.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Transaction review retrieved successfully.',
     type: String,
   })
   @HttpCode(200)
-  async getTransactionReview(@User('_id') userId: string): Promise<string> {
-    return this.receiptService.getTransactionReview(userId);
+  async getTransactionReview(
+    @User('_id') userId: string,
+    @Body('query') customPrompt: string, // Accepting prompt from the request body
+  ): Promise<string> {
+    return this.receiptService.getTransactionReview(userId, customPrompt);
   }
 }

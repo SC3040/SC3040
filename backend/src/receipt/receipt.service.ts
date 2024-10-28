@@ -160,7 +160,10 @@ export class ReceiptService {
 
   // Get transaction review for a user
   @TrackErrors
-  async getTransactionReview(userId: string): Promise<string> {
+  async getTransactionReview(
+    userId: string,
+    customPrompt: string,
+  ): Promise<string> {
     // Get all receipts for the user
     const receipts = await this.receiptModel.find({ userId });
 
@@ -181,6 +184,7 @@ export class ReceiptService {
     const data = {
       apiKeys: apiKeys,
       receipts: receiptsData,
+      query: customPrompt,
     };
 
     this.logger.log('Fetching transaction review for user:', userId);
