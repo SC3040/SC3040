@@ -138,7 +138,7 @@ export class ReceiptController {
     return this.receiptService.getReceiptsByUser(userId);
   }
 
-  @Get('review')
+  @Post('review')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get user transaction review with a custom prompt.',
