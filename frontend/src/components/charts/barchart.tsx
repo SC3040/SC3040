@@ -11,7 +11,7 @@ const generateMonthOptions = () => {
   const now = moment();
 
   for (let i = 0; i < 12; i++) {
-    months.push(now.format('MMMM YYYY')); 
+    months.push(now.format('MMMM YYYY'));
     now.subtract(1, 'month');
   }
 
@@ -66,7 +66,7 @@ export default function BarChartC({ data }: BarChartCProps): JSX.Element {
         category,
         total,
       }))
-      .sort((a, b) => b.total - a.total); 
+      .sort((a, b) => b.total - a.total);
   }, [filteredData]);
 
   const monthOptions = generateMonthOptions();
@@ -106,12 +106,18 @@ export default function BarChartC({ data }: BarChartCProps): JSX.Element {
         {chartData.length === 0 ? (
           <div className="text-center text-gray-500">No data available for the selected period</div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <XAxis dataKey="category" />
+          <ResponsiveContainer width="100%" height={450}>
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 50 }}>
+              <XAxis
+                dataKey="category"
+                angle={-45}
+                textAnchor="end"
+                interval={0}
+                style={{ fontWeight: 'bold' }}
+              />
               <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
               <Tooltip
-                formatter={(value: number) => `$${value.toFixed(2)}`}
+                formatter={(value: number) => [`$${value.toFixed(2)}`, "Total"]}
                 labelFormatter={(label: string) => `Category: ${label}`}
               />
               <Bar dataKey="total" fill="#89ca9d" />

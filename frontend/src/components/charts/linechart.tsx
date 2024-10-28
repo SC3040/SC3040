@@ -18,10 +18,10 @@ interface LineChartCProps {
 export default function LineChartC({ data }: LineChartCProps): JSX.Element {
   const [timeRange, setTimeRange] = useState<"2m" | "3m" | "6m" | "1y">("1y");
 
-  const chartData: ChartDataPoint[] = useMemo(() => {
+  const { chartData, filterDate, today, missingMonths } = useMemo(() => {
     const groupedData: { [key: string]: ChartDataPoint } = data.reduce((acc, receipt) => {
       const date = new Date(receipt.date);
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`; // MM/YYYY format
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
       if (!acc[monthYear]) {
         acc[monthYear] = { monthYear, totalSpent: 0 };
       }
@@ -35,7 +35,6 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     );
 
     const today = new Date();
-
     const timeRanges = {
       "2m": new Date(today.getFullYear(), today.getMonth() - 2, 1),
       "3m": new Date(today.getFullYear(), today.getMonth() - 3, 1),
@@ -44,14 +43,22 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     };
 
     const filterDate = timeRanges[timeRange];
-
     filteredData = filteredData.filter((entry) => {
       const [month, year] = entry.monthYear.split('/');
       const entryDate = new Date(Number(year), Number(month) - 1, 1);
       return entryDate >= filterDate && entryDate <= today;
     });
 
-    return filteredData;
+    // Find missing months in the filtered range
+    const missingMonths: string[] = [];
+    for (let d = new Date(filterDate); d <= today; d.setMonth(d.getMonth() + 1)) {
+      const monthYear = `${d.getMonth() + 1}/${d.getFullYear()}`;
+      if (!filteredData.some((entry) => entry.monthYear === monthYear)) {
+        missingMonths.push(d.toLocaleDateString('default', { month: 'short', year: 'numeric' }));
+      }
+    }
+
+    return { chartData: filteredData, filterDate, today, missingMonths };
   }, [data, timeRange]);
 
   const formatMonthYear = (monthYear: string) => {
@@ -59,6 +66,17 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
     const date = new Date(Number(year), Number(month) - 1);
     return date.toLocaleString('default', { month: 'short' });
   };
+
+  const startDate = filterDate.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+  const endDate = today.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+
+  // Format missing months message
+  const missingDataMessage =
+    missingMonths.length === 0
+      ? ""
+      : missingMonths.length <= 2
+        ? `No data available for: ${missingMonths.join(", ")}`
+        : `No data available from ${missingMonths[0]} to ${missingMonths[missingMonths.length - 1]}`;
 
   return (
     <Card className="w-full bg-transparent border-slate-200 border-2">
@@ -101,24 +119,37 @@ export default function LineChartC({ data }: LineChartCProps): JSX.Element {
             Past 1 Year
           </Button>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="monthYear"
-              tickFormatter={formatMonthYear}
-              tick={{ fontWeight: 'bold' }}
-              tickMargin={10}
-            />
 
-            <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
-            <Tooltip
-              formatter={(value: number) => `$${value.toFixed(2)}`}
-              labelFormatter={(label: string) => `Month: ${formatMonthYear(label)}`}
-            />
-            <Line type="monotone" dataKey="totalSpent" stroke="#8884d8" activeDot={{ r: 8 }} />
-          </LineChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <div className="text-center text-gray-500">
+            No data available from {startDate} to {endDate}
+          </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="monthYear"
+                  tickFormatter={formatMonthYear}
+                  tick={{ fontWeight: 'bold' }}
+                  tickMargin={10}
+                />
+                <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
+                <Tooltip
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Total Spent"]}
+                  labelFormatter={(label: string) => `Month: ${formatMonthYear(label)}`}
+                />
+                <Line type="monotone" dataKey="totalSpent" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+            {missingDataMessage && (
+              <div className="text-center text-gray-500 mt-2">
+                {missingDataMessage}
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );

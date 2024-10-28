@@ -18,7 +18,10 @@ const generateMonthOptions = () => {
   return months;
 };
 
-const COLORS = ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'];
+const COLORS = [
+  '#2E86C1', '#C0392B', '#239B56', '#8E44AD', '#D68910',
+  '#1F618D', '#A93226', '#117A65', '#B9770E', '#6E2C00'
+];
 
 interface DonutPieChartProps {
   data: ReceiptResponse[];
@@ -27,7 +30,8 @@ interface DonutPieChartProps {
 export default function DonutPieChart({ data }: DonutPieChartProps) {
   const [timeFilter, setTimeFilter] = React.useState<string>('6m');
   const [filteredData, setFilteredData] = React.useState<ReceiptResponse[]>(data);
-  const [chartSize, setChartSize] = React.useState({ innerRadius: 80, outerRadius: 120, labelPosition: 'inside' });
+  const [chartSize, setChartSize] = React.useState({ innerRadius: 80, outerRadius: 120 });
+  const [isMobile, setIsMobile] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const now = moment();
@@ -74,13 +78,15 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
 
   React.useEffect(() => {
     const handleResize = () => {
-      const width = window.innerWidth;
-      if (width <= 480) {
-        setChartSize({ innerRadius: 10, outerRadius: 30, labelPosition: 'inside' });
-      } else if (width <= 768) {
-        setChartSize({ innerRadius: 20, outerRadius: 40, labelPosition: 'inside' });
+      const windowWidth = window.innerWidth;
+      const screenWidth = window.screen.width;
+
+      if (windowWidth <= screenWidth * 0.75) {
+        setChartSize({ innerRadius: 50, outerRadius: 100 });
+        setIsMobile(true);
       } else {
-        setChartSize({ innerRadius: 80, outerRadius: 120, labelPosition: 'inside' });
+        setChartSize({ innerRadius: 80, outerRadius: 120 });
+        setIsMobile(false);
       }
     };
 
@@ -90,10 +96,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Tooltip formatter function to add comma separator
-  const tooltipFormatter = (value: number) => {
-    return `$${value.toLocaleString()}`;
-  };
+  const tooltipFormatter = (value: number) => `$${value.toLocaleString()}`;
 
   return (
     <Card className="w-full bg-transparent border-slate-200 border-2">
@@ -141,12 +144,8 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
                   innerRadius={chartSize.innerRadius}
                   outerRadius={chartSize.outerRadius}
                   fill="#8884d8"
-                  label={({ category, percentage }) =>
-                    chartSize.labelPosition === 'outside'
-                      ? `${category}: ${percentage}%`
-                      : `${category}: ${percentage}%`
-                  }
-                  labelLine={chartSize.labelPosition === 'outside'}
+                  label={isMobile ? undefined : ({ category, percentage }) => `${category}: ${percentage}%`}
+                  labelLine={!isMobile}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -155,6 +154,19 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
                 <Tooltip formatter={tooltipFormatter} />
               </PieChart>
             </ResponsiveContainer>
+          )}
+          {isMobile && chartData.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-4">
+              {chartData.map((entry, index) => (
+                <div key={index} className="flex items-center">
+                  <div
+                    className="w-4 h-4 mr-2"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  ></div>
+                  <span className="text-sm font-bold">{entry.category}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </CardContent>
