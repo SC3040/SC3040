@@ -301,7 +301,6 @@ const ReceiptImagePage: React.FC = () => {
                             value={receiptData.merchantName}
                             onChange={(e) => handleInputChange(e, 'merchantName')}
                             onFocus={handleInputFocus}
-                            placeholder="Starbucks"
                             className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400"
                         />
                     </div>
@@ -324,7 +323,6 @@ const ReceiptImagePage: React.FC = () => {
                                 value={receiptData.totalCost}
                                 onChange={(e) => handleInputChange(e, 'totalCost')}
                                 onFocus={handleInputFocus}
-                                placeholder="Total Cost"
                                 step="0.01"
                                 className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400"
                             />
