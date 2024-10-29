@@ -357,10 +357,9 @@ describe('ReceiptController', () => {
       // Mock the service.getTransactionReview method
       mockReceiptService.getTransactionReview.mockResolvedValue(mockReview);
 
-      const result = await controller.getTransactionReview(
-        userId,
-        customPrompt,
-      );
+      const result = await controller.getTransactionReview(userId, {
+        query: customPrompt,
+      });
 
       expect(service.getTransactionReview).toHaveBeenCalledWith(
         userId,
@@ -379,7 +378,7 @@ describe('ReceiptController', () => {
       );
 
       await expect(
-        controller.getTransactionReview(userId, customPrompt),
+        controller.getTransactionReview(userId, { query: customPrompt }),
       ).rejects.toThrow(
         new HttpException('User not found', HttpStatus.NOT_FOUND),
       );
