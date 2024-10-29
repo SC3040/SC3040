@@ -18,7 +18,7 @@ const AIAnalysis: React.FC = () => {
     const handleUserPromptSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log("User prompt submitted:", userPrompt);
-        await fetchAIPrompt();
+        await fetchAIPrompt(userPrompt);
 
         if (!error) {
             setUserPrompt("");

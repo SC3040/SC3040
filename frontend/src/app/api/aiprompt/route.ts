@@ -24,6 +24,10 @@ export async function fetchAIPromptServerAction(prompt : string): Promise<string
             })
         });
 
+        console.log("[fetchAIPromptServerAction] Request Body: ", JSON.stringify({
+            query: prompt
+        }))
+
         const data = await response.text();
         console.log("[aiprompt route] data:", data);
         

@@ -8,13 +8,12 @@ export function useAIPrompt() {
     const [prompt, setPrompt] = useState<string>("");
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchAIPrompt = async (): Promise<void> => {
+    const fetchAIPrompt = async (userPrompt : string): Promise<void> => {
         setLoading(true);
-        setPrompt("");
         setError(null);
-
+        setPrompt("");
         try {
-            const aIPrompt = await fetchAIPromptServerAction(prompt);
+            const aIPrompt = await fetchAIPromptServerAction(userPrompt);
             if (typeof aIPrompt === 'string') {
                 setPrompt(aIPrompt);
                 console.log('Fetched Prompt:', aIPrompt);
@@ -26,6 +25,7 @@ export function useAIPrompt() {
             setError(err as Error);
         } finally {
             setLoading(false);
+            
         }
     };
 
