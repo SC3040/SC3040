@@ -75,7 +75,6 @@ const ReceiptImagePage: React.FC = () => {
             };
             reader.readAsDataURL(selectedFile);
             
-            // Reset form touched state
             setFormTouched(false);
         }
     };
@@ -84,6 +83,12 @@ const ReceiptImagePage: React.FC = () => {
     const formatDateForInput = (isoString: string): string => {
         if (!isoString) return '';
         return isoString.split('T')[0];
+    };
+
+    // Helper function to format number to 2 decimal places
+    const formatToTwoDecimals = (value: string): string => {
+        const number = parseFloat(value);
+        return isNaN(number) ? '' : number.toFixed(2);
     };
 
     // Helper function to parse category string into enum
@@ -115,10 +120,12 @@ const ReceiptImagePage: React.FC = () => {
                 ...data,
                 itemizedList: data.itemizedList.map(item => ({
                     ...item,
-                    itemQuantity: item.itemQuantity || 1
+                    itemQuantity: item.itemQuantity || 1,
+                    itemCost: formatToTwoDecimals(item.itemCost)
                 })),
                 date: formatDateForInput(data.date),
-                category: parseCategory(data.category)
+                category: parseCategory(data.category),
+                totalCost: formatToTwoDecimals(data.totalCost)
             };
     
             console.log("[Upload Page.tsx] cleanedData: ", cleanedData);
@@ -146,7 +153,8 @@ const ReceiptImagePage: React.FC = () => {
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>, field: keyof Omit<ReceiptResponse, 'id' | 'category' | 'itemizedList'>) => {
         if (formTouched) {
-            setReceiptData({ ...receiptData, [field]: e.target.value });
+            const value = field === 'totalCost' ? formatToTwoDecimals(e.target.value) : e.target.value;
+            setReceiptData({ ...receiptData, [field]: value });
         }
     };
     
@@ -164,35 +172,43 @@ const ReceiptImagePage: React.FC = () => {
         const newItemizedList = [...receiptData.itemizedList];
         newItemizedList[index] = { 
             ...newItemizedList[index], 
-            [field]: field === 'itemQuantity' ? parseInt(value, 10) : value 
+            [field]: field === 'itemQuantity' ? parseInt(value, 10) : 
+                    field === 'itemCost' ? formatToTwoDecimals(value) : value 
         };
-        setReceiptData({ ...receiptData, itemizedList: newItemizedList });
+        setReceiptData(prevData => ({ 
+            ...prevData, 
+            itemizedList: newItemizedList,
+            totalCost: calculateTotal(newItemizedList)
+        }));
     };
 
     const calculateTotal = (items: ReceiptItem[]): string => {
         const total = items.reduce((sum, item) => {
-            const cost = parseFloat(item.itemCost) * item.itemQuantity;
+            const cost = parseFloat(item.itemCost || '0') * (item.itemQuantity || 0);
             return sum + (isNaN(cost) ? 0 : cost);
         }, 0);
         return total.toFixed(2);
     };
     
     const handleAddItem = () => {
-        const newItemizedList = [...receiptData.itemizedList, { itemName: '', itemQuantity: 0, itemCost: '' }];
-        setReceiptData({
-            ...receiptData,
+        const newItemizedList = [
+            ...receiptData.itemizedList, 
+            { itemName: '', itemQuantity: 1, itemCost: '0.00' }
+        ];
+        setReceiptData(prevData => ({
+            ...prevData,
             itemizedList: newItemizedList,
             totalCost: calculateTotal(newItemizedList)
-        });
+        }));
     };
     
     const handleRemoveItem = (index: number) => {
         const newItemizedList = receiptData.itemizedList.filter((_, i) => i !== index);
-        setReceiptData({ 
-            ...receiptData,
+        setReceiptData(prevData => ({ 
+            ...prevData,
             itemizedList: newItemizedList,
             totalCost: calculateTotal(newItemizedList)
-        });
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -301,15 +317,18 @@ const ReceiptImagePage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                         <Label className="text-slate-700 font-medium">Cost:</Label>
-                        <Input
-                            type="number"
-                            value={receiptData.totalCost}
-                            onChange={(e) => handleInputChange(e, 'totalCost')}
-                            onFocus={handleInputFocus}
-                            placeholder="Total Cost"
-                            step="0.01"
-                            className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400"
-                        />
+                        <div className="flex_center gap-1">
+                            <span className="font-medium text-lg text-slate-600">$</span>
+                            <Input
+                                type="number"
+                                value={receiptData.totalCost}
+                                onChange={(e) => handleInputChange(e, 'totalCost')}
+                                onFocus={handleInputFocus}
+                                placeholder="Total Cost"
+                                step="0.01"
+                                className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                            />
+                        </div>
                     </div>
     
                     <div className="flex flex-col gap-2">
@@ -357,6 +376,8 @@ const ReceiptImagePage: React.FC = () => {
                             </div>
                             <div className="space-y-1.5">
                                 <Label className="text-slate-700 font-medium">Unit Cost:</Label>
+                            <div className="flex_center gap-1">
+                            <span className="font-medium text-lg text-slate-600">$</span>
                                 <Input
                                     type="number"
                                     value={item.itemCost}
@@ -365,6 +386,7 @@ const ReceiptImagePage: React.FC = () => {
                                     step="0.01"
                                     className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400"
                                 />
+                                </div>
                             </div>
                         </div>
                     </div>
