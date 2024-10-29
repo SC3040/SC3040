@@ -151,8 +151,10 @@ export class ReceiptController {
   @HttpCode(200)
   async getTransactionReview(
     @User('_id') userId: string,
-    @Body('query') customPrompt: string, // Accepting prompt from the request body
+    @Body() body: { query: string }, // Accepting prompt from the request body
   ): Promise<string> {
+    const customPrompt = body.query;
+    this.logger.log('customPrompt:', customPrompt);
     return this.receiptService.getTransactionReview(userId, customPrompt);
   }
 }
