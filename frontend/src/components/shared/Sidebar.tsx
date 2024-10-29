@@ -56,7 +56,7 @@ const Sidebar: React.FC = () => {
                     <div className="flex flex-col items-center space-y-2">
                         <div className="w-20 h-20 rounded-full overflow-hidden">
                             <Image
-                                src={`data:image/jpeg;base64,${user.image}`}
+                                src="/images/mr.jpg"
                                 alt={`${user.firstName} ${user.lastName}'s profile picture`}
                                 width={80}
                                 height={80}
