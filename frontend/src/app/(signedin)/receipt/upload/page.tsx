@@ -79,6 +79,11 @@ const ReceiptImagePage: React.FC = () => {
         }
     };
 
+    // Helper function to format ISO date string to YYYY-MM-DD
+    const formatDateForInput = (isoString: string): string => {
+        if (!isoString) return '';
+        return isoString.split('T')[0];
+    };
 
     // Helper function to parse category string into enum
     function parseCategory(category: string): Category {
@@ -111,6 +116,7 @@ const ReceiptImagePage: React.FC = () => {
                     ...item,
                     itemQuantity: item.itemQuantity || 1
                 })),
+                date: formatDateForInput(data.date),
                 category: parseCategory(data.category)
             };
     
