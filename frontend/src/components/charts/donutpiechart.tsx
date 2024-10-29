@@ -196,7 +196,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
       </CardContent>
       <CardFooter className="flex justify-center items-center">
         <div className="text-center text-sm font-medium">
-          Total Spending: ${totalSpending.toLocaleString()}
+          Total Spending: ${totalSpending.toFixed(2)}
         </div>
       </CardFooter>
     </Card>
