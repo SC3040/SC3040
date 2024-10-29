@@ -31,7 +31,6 @@ export class ReceiptService {
 
     // Send the image directly to Flask for processing (no need for Binary conversion)
     const flaskResponse = await this.processReceiptWithFlask(userId, image);
-    this.logger.log('Flask Response:', JSON.stringify(flaskResponse));
 
     // Attempt to parse the date with custom format "DD/MM/YYYY"
     let receiptDate: string;
@@ -48,13 +47,13 @@ export class ReceiptService {
       id: '',
       merchantName: flaskResponse.merchant_name,
       date: receiptDate,
-      totalCost: parseInt(flaskResponse.total_cost),
+      totalCost: parseFloat(flaskResponse.total_cost),
       category: flaskResponse.category,
       itemizedList: flaskResponse.itemized_list
         ? flaskResponse.itemized_list.map((item) => ({
             itemName: item.item_name,
             itemQuantity: parseInt(item.item_quantity),
-            itemCost: parseInt(item.item_cost),
+            itemCost: parseFloat(item.item_cost),
           }))
         : [], // Fallback to empty array if itemized_list is missing
       userId: '',
@@ -245,6 +244,7 @@ export class ReceiptService {
         },
       );
 
+      this.logger.log('Response from Flask:', response.data);
       return response.data;
     } catch (error) {
       this.logger.error('Error processing receipt with Flask', error.message);
