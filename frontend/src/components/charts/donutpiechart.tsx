@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import * as React from "react";
 import { Pie, PieChart, Cell, Tooltip, ResponsiveContainer } from "recharts";
@@ -35,19 +35,36 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
 
   React.useEffect(() => {
     const now = moment();
-    let filteredReceipts: ReceiptResponse[];
+    const endOfCurrentMonth = now.clone().endOf("month"); // Ensure we only include dates within the current month
+    let filteredReceipts: ReceiptResponse[] = [];
 
     if (timeFilter === '6m') {
-      filteredReceipts = data.filter(receipt => moment(receipt.date).isAfter(now.clone().subtract(6, 'months')));
+      const boundaryDate = now.clone().subtract(6, 'months').startOf('month');
+      filteredReceipts = data.filter(receipt =>
+        moment(receipt.date).isSameOrAfter(boundaryDate, 'day') &&
+        moment(receipt.date).isSameOrBefore(endOfCurrentMonth, 'day')
+      );
     } else if (timeFilter === '3m') {
-      filteredReceipts = data.filter(receipt => moment(receipt.date).isAfter(now.clone().subtract(3, 'months')));
+      const boundaryDate = now.clone().subtract(3, 'months').startOf('month');
+      filteredReceipts = data.filter(receipt =>
+        moment(receipt.date).isSameOrAfter(boundaryDate, 'day') &&
+        moment(receipt.date).isSameOrBefore(endOfCurrentMonth, 'day')
+      );
     } else if (timeFilter === '2m') {
-      filteredReceipts = data.filter(receipt => moment(receipt.date).isAfter(now.clone().subtract(2, 'months')));
+      const boundaryDate = now.clone().subtract(2, 'months').startOf('month');
+      filteredReceipts = data.filter(receipt =>
+        moment(receipt.date).isSameOrAfter(boundaryDate, 'day') &&
+        moment(receipt.date).isSameOrBefore(endOfCurrentMonth, 'day')
+      );
     } else {
       const [monthName, year] = timeFilter.split(' ');
       filteredReceipts = data.filter(receipt => {
         const receiptDate = moment(receipt.date);
-        return receiptDate.format('MMMM') === monthName && receiptDate.format('YYYY') === year;
+        return (
+          receiptDate.format('MMMM') === monthName &&
+          receiptDate.format('YYYY') === year &&
+          receiptDate.isSameOrBefore(endOfCurrentMonth, 'day')
+        );
       });
     }
 
@@ -59,7 +76,14 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
       if (!acc[receipt.category]) {
         acc[receipt.category] = 0;
       }
-      acc[receipt.category] += parseFloat(receipt.totalCost);
+      
+      const cost = typeof receipt.totalCost === "string" 
+        ? parseFloat(receipt.totalCost.replace(/[^0-9.-]+/g, ""))
+        : receipt.totalCost;
+
+      if (!isNaN(cost)) {
+        acc[receipt.category] += cost;
+      }
       return acc;
     }, {} as { [key: string]: number });
 
@@ -68,7 +92,7 @@ export default function DonutPieChart({ data }: DonutPieChartProps) {
     return Object.entries(categoryTotals).map(([category, total]) => ({
       category,
       total,
-      percentage: ((total / totalSpending) * 100).toFixed(2),
+      percentage: totalSpending > 0 ? ((total / totalSpending) * 100).toFixed(2) : '0.00',
     }));
   }, [filteredData]);
 

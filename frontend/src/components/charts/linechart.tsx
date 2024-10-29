@@ -16,7 +16,7 @@ interface LineChartCProps {
 }
 
 export default function LineChartC({ data }: LineChartCProps): JSX.Element {
-  const [timeRange, setTimeRange] = useState<"2m" | "3m" | "6m" | "1y">("1y");
+  const [timeRange, setTimeRange] = useState<"2m" | "3m" | "6m" | "1y">("6m");
 
   const { chartData, filterDate, today, missingMonths } = useMemo(() => {
     const groupedData: { [key: string]: ChartDataPoint } = data.reduce((acc, receipt) => {
