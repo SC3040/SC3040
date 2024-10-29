@@ -82,8 +82,8 @@ const ReceiptImagePage: React.FC = () => {
 
     // Helper function to parse category string into enum
     function parseCategory(category: string): Category {
-        const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-        return (Category as any)[normalizedCategory] || Category.OTHERS;
+        const processedCat = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+        return processedCat as Category
     }
 
     const handleUpload = async () => {

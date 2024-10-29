@@ -15,9 +15,6 @@ type SignUpUser = {
   password: string;
 }
 
-
-
-
 export async function signIn(data: SignInUser) {
   try {
     const response = await fetch(`${process.env.BACKEND_URL}/api/users/login`, {
