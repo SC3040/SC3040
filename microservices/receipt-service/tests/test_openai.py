@@ -43,3 +43,49 @@ def test_non_receipt_images(app_client, non_receipt_images, subtests):
 
             assert response.status_code == 400
             assert response.json.get('error') == "Image is not a receipt or error parsing receipt"
+
+
+def test_receipt_review(app_client):
+    raw_data = {
+        "apiKeys": {
+            "defaultModel": "openai",
+            "geminiKey": "UNSET",
+            "openaiKey": f"{os.getenv('openaiKey')}"
+        },
+    "receipts": [
+            {
+                "id": "61e6f0a1c8a4f93b1c1e1f1a",
+                "merchantName": "Supermarket A",
+                "date": "2023-10-20T12:34:56.789Z",
+                "totalCost": 54.99,
+                "category": "Groceries",
+                "itemizedList": [
+                    {
+                        "itemName": "Milk",
+                        "itemQuantity": 2,
+                        "itemCost": 3.5
+                    },
+                    {
+                        "itemName": "Bread",
+                        "itemQuantity": 1,
+                        "itemCost": 2.0
+                    }
+                ]
+            }
+        ],
+        "query": "What can I do to reduce my spendings? I live in Singapore. Any singapore tips?"
+    }
+
+    # Send post request
+    response = app_client.post(
+        '/review',
+        json=raw_data,
+        headers={'Content-Type': 'application/json'}
+    )
+
+    # Assert response
+    assert response.status_code == 200
+    assert isinstance(response.json, str)
+    assert len(response.json) > 10
+
+
